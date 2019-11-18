@@ -28,6 +28,8 @@ class DifferenceOfGaussians():
     '''utility to access the kernels variable directly'''
     return self.kernels[index]
 
+  def __len__(self):
+      return self.max_num_kernels
 
   @staticmethod
   def kernel_width(self, cell_type):
@@ -82,7 +84,7 @@ class DifferenceOfGaussians():
                   and surround (vertical_s, horizontal_s) components of the
                   difference of Gaussians
       '''
-      half_width = width/2
+      half_width = width//2
       x, y = numpy.meshgrid(numpy.arange(-half_width, half_width + 1),
                             numpy.arange(-half_width, half_width + 1))
       y = -y

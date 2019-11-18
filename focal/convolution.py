@@ -20,20 +20,20 @@ class Convolution():
     '''
     width  = img.shape[1]
     height = img.shape[0]
-    half_k_width = horz_k.size/2
-    half_img_width  = width/2
-    half_img_height = height/2
+    half_k_width = horz_k.size//2
+    half_img_width  = width//2
+    half_img_height = height//2
 
     tmp = numpy.zeros_like(img, dtype=numpy.float32)
 
     if mode == "full":
-      horizontal_range = xrange(width) 
-      vertical_range   = xrange(height)
+      horizontal_range = numpy.arange(width)
+      vertical_range   = numpy.arange(height)
     else:
-      horizontal_range = xrange(half_k_width, width  - half_k_width + 1)
-      vertical_range   = xrange(half_k_width, height - half_k_width + 1)
+      horizontal_range = numpy.arange(half_k_width, width  - half_k_width + 1)
+      vertical_range   = numpy.arange(half_k_width, height - half_k_width + 1)
 
-    for y in xrange(height):
+    for y in numpy.arange(height):
         for x in horizontal_range:
             if (x - half_img_width)%col_keep != 0:
                 continue
@@ -41,7 +41,7 @@ class Convolution():
             k_sum = 0.
             k = 0
 
-            for i in xrange(-half_k_width, half_k_width + 1):
+            for i in numpy.arange(-half_k_width, half_k_width + 1):
                 img_idx = x + i
                 if img_idx >= 0 and img_idx < img.shape[1]:
                     k_sum += img[y,img_idx]*horz_k[k]
@@ -60,7 +60,7 @@ class Convolution():
 
         k_sum = 0.
         k = 0
-        for i in xrange(-half_k_width, half_k_width + 1):
+        for i in numpy.arange(-half_k_width, half_k_width + 1):
           img_idx = y + i
           if img_idx >= 0 and img_idx < img.shape[0]:
             k_sum += tmp[img_idx, x]*vert_k[k]
@@ -132,8 +132,8 @@ class Convolution():
     if col_keep < img.shape[1] and row_keep < img.shape[0]:
       width = img.shape[1]
       height = img.shape[0]
-      half_img_width  = width/2
-      half_img_height = height/2
+      half_img_width  = width//2
+      half_img_height = height//2
       
       col_range = numpy.arange(width)
       row_range = numpy.arange(height)

@@ -4,7 +4,7 @@ import pickle
 from os import listdir
 from os.path import isfile, join
 import sys
-import md5
+from hashlib import md5
 
 class Correlation():
   '''
@@ -35,8 +35,10 @@ class Correlation():
     mode = "full" #same, full, valid
     seed = self.kernels_to_string(self.full_kernels)
     seed += mode
-    
-    filename = "correlation-cache-%s.p"%( md5.new(seed).hexdigest() )
+    m = md5()
+    m.update(seed.encode("utf-8"))
+    hash = m.hexdigest()
+    filename = u"correlation-cache-%s.p"%( hash )
     
     if isfile(filename):
       correlations = pickle.load( open( filename, "rb" ) )

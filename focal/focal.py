@@ -2,7 +2,6 @@
 
 import numpy
 from scipy.signal import sepfir2d, convolve2d
-from scipy.misc import imresize
 import matplotlib.image as mpimg
 from matplotlib import cm
 import matplotlib.animation as animation
@@ -12,13 +11,13 @@ import pickle
 from os import listdir
 from os.path import isfile, join
 import sys
-import md5
+from hashlib import md5
 
-from dog import DifferenceOfGaussians
-from convolution import Convolution
-from correlation import Correlation
+from .dog import DifferenceOfGaussians
+from .convolution import Convolution
+from .correlation import Correlation
 
-from __init__ import idx2coord
+from .__init__ import idx2coord
 
 class Focal():
   '''Filter Overlap Correction ALgorithm, simulates the foveal pit
@@ -27,7 +26,7 @@ class Focal():
       See DOI: 10.1109/TNN.2010.2048339
   '''
 
-  def __init__(self):
+  def __init__(self, mute_output=True):
     '''Get the four layer's kernels, create the correlations and
        a convolution wrapper.
        :const MIN_IMG_WIDTH: Minimum image width for which to use 
@@ -37,6 +36,7 @@ class Focal():
     self.correlations = Correlation(self.kernels.full_kernels)
     self.convolver = Convolution()
     self.MIN_IMG_WIDTH = 256
+    self.mute = mute_output
 
   def apply(self, image, spikes_per_unit=0.3):
     '''Wrapper function to convert an image into a FoCal representation
@@ -72,11 +72,12 @@ class Focal():
     num_images = len(spike_images)
 
     #how many non-zero spikes are in the images
-    max_cycles = 0
-    for i in range(num_images):
-        max_cycles += numpy.sum(spike_images[i] != 0)
+#     max_cycles = 0
+#     for i in range(num_images):
+#         max_cycles += numpy.sum(spike_images[i] != 0)
+    max_cycles = img_size * num_images
 
-    total_spikes = max_cycles.copy()
+    total_spikes = img_size * num_images
     
     #reduce to desired number
     max_cycles = numpy.int(spikes_per_unit*max_cycles)
@@ -92,11 +93,13 @@ class Focal():
         big_image[row:row+height, col:col+width] = tmp_img
 
     # Main FoCal loop
-    for count in xrange(max_cycles):
+    for count in range(max_cycles):
         
         # print out completion percentage
-#        percent = (count*100.)/float(total_spikes-1)
-#        sys.stdout.write("\rFocal %d%%"%(percent))
+        percent = (count*100.)/float(total_spikes-1)
+        if not self.mute:
+            sys.stdout.write("\rFocal %d%%"%(percent))
+            sys.stdout.flush()
         
         # Get maximum value's index,
         max_idx = numpy.argmax(big_image)
@@ -133,10 +136,8 @@ class Focal():
             is_max_val_layer = overlap_cell_type == cell_type 
             # c_i = c_i - c_{max}<K_i, K_{max}>
             self.adjust_with_correlation(big_image,
-                                         self.correlations[cell_type]\
-                                                          [overlap_cell_type], 
-                                         overlap_idx, max_val, 
-                                         is_max_val_layer=is_max_val_layer)
+                self.correlations[cell_type][overlap_cell_type],
+                overlap_idx, max_val, is_max_val_layer=is_max_val_layer)
 
     
     return ordered_spikes
@@ -185,14 +186,14 @@ class Focal():
     
     img_height, img_width = img.shape
     correlation_width = correlation.shape[0]
-    half_correlation_width = correlation_width/2
-    half_img_width = img_width/2
-    half_img_height = img_height/2
+    half_correlation_width = correlation_width//2
+    half_img_width = img_width//2
+    half_img_height = img_height//2
 
     # Get max value's coordinates
     row, col = idx2coord(max_idx, img_width)
-    row_idx = row/half_img_height
-    col_idx = col/half_img_width
+    row_idx = row//half_img_height
+    col_idx = col//half_img_width
     
     # Calculate the zone to affect with the correlation
     up_lim = (row_idx)*half_img_height
@@ -245,7 +246,7 @@ class Focal():
                                                       [ 2 | 3 ]
                                                       ---------
     '''
-    row_add = cell_type/2
+    row_add = cell_type//2
     col_add = cell_type%2
     global_coords = (coords[0] + row_add*local_img_shape[0], 
                      coords[1] + col_add*local_img_shape[1])
@@ -261,8 +262,8 @@ class Focal():
                                                       [ 2 | 3 ]
                                                       ---------
     '''
-    row_count = coords[0]/single_shape[0]
-    col_count = coords[1]/single_shape[1]
+    row_count = coords[0]//single_shape[0]
+    col_count = coords[1]//single_shape[1]
     new_row = coords[0] - single_shape[0]*row_count
     new_col = coords[1] - single_shape[1]*col_count
     
@@ -271,8 +272,8 @@ class Focal():
 
   def cell_type_from_global_coords(self, coords, single_shape):
     '''Utility to compute which layer does a coordinate belong to'''
-    row_type = coords[0]/single_shape[0]
-    col_type = coords[1]/single_shape[1]
+    row_type = coords[0]//single_shape[0]
+    col_type = coords[1]//single_shape[1]
     cell_type = row_type*2 + col_type
     
     return cell_type

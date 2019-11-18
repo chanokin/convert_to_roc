@@ -1,7 +1,7 @@
-from focal import *
-from convolution import *
-from correlation import *
-from dog import *
+from .focal import *
+from .convolution import *
+from .correlation import *
+from .dog import *
 
 import pylab as plt
 
@@ -18,7 +18,7 @@ def rgb2gray(rgb):
 
 def idx2coord(idx, width):
     '''Convert a 1D index into a 2D coordinate'''
-    return (int(idx/width), idx%width)
+    return (int(idx//width), int(idx%width))
 
 
 def spike_trains_to_images_g(spike_trains, base_img, num_kernels=4):
@@ -37,11 +37,11 @@ def spike_trains_to_images_g(spike_trains, base_img, num_kernels=4):
         coords = idx2coord(adjusted_idx, base_img.shape[1])
         imgs[cell_type][coords] = val
         if val == numpy.nan:
-            print "spike is nan"
+            print("spike is nan")
         if val == numpy.inf:
-            print "spike is inf"
+            print("spike is inf")
         if val == -numpy.inf:
-            print "spike is -inf"
+            print("spike is -inf")
         
     return imgs
 
@@ -157,24 +157,15 @@ def focal_to_spike(spikes, img_shape, spikes_per_time_block=10, start_time=0., t
     width = img_shape[1]
     height = img_shape[0]
     total_width = 2*width
-    total_height = 2*height 
+    total_height = 2*height
     spike_array = [[] for i in range(total_height*total_width)]
     pack_time = start_time
     spikes_per_block_count = 0
-    for spike in spikes:
-        layer = spike[2]
-        pad_x = width  if layer == 1 or layer == 3 else 0
-        pad_y = height if layer == 2 or layer == 3 else 0
-        
-        loc_idx = spike[0]
-        loc_x = loc_idx%width
-        loc_y = loc_idx/width
-        glb_x = pad_x + loc_x
-        glb_y = pad_y + loc_y
-        glb_idx = glb_y*total_width + glb_x
-        
+    for loc_idx, val, layer in spikes:
+        glb_idx = int(layer * neurons_per_layer + loc_idx)
+
         spike_array[glb_idx].append(pack_time)
-        
+
         spikes_per_block_count += 1
         if spikes_per_block_count == spikes_per_time_block:
             spikes_per_block_count = 0
