@@ -9,7 +9,8 @@ class Convolution():
   def __init__(self):
     pass
     
-  def sep_convolution(self, img, horz_k, vert_k, col_keep=1, row_keep=1, mode="full"):
+  def sep_convolution(self, img, horz_k, vert_k, col_keep=1, row_keep=1, mode="full",   
+                      fill=0):
     ''' Separated convolution -
         img      => image to convolve
         horiz_k  => first convolution kernel vector (horizontal)
@@ -17,6 +18,7 @@ class Convolution():
         col_keep => which columns are we supposed to calculate
         row_keep => which rows are we supposed to calculate
         mode     => if "full": convolve all the image otherwise just valid pixels
+        fill     => what fill value to use 
     '''
     width  = img.shape[1]
     height = img.shape[0]
@@ -43,8 +45,10 @@ class Convolution():
 
             for i in numpy.arange(-half_k_width, half_k_width + 1):
                 img_idx = x + i
-                if img_idx >= 0 and img_idx < img.shape[1]:
+                if img_idx >= 0 and img_idx < width:
                     k_sum += img[y,img_idx]*horz_k[k]
+                else:
+                    k_sum += fill * horz_k[k]
                 k += 1
 
             tmp[y,x] = k_sum
@@ -62,8 +66,10 @@ class Convolution():
         k = 0
         for i in numpy.arange(-half_k_width, half_k_width + 1):
           img_idx = y + i
-          if img_idx >= 0 and img_idx < img.shape[0]:
+          if img_idx >= 0 and img_idx < height:
             k_sum += tmp[img_idx, x]*vert_k[k]
+          else:
+            k_sum += fill * vert_k[k]
               
           k += 1
 
@@ -73,7 +79,7 @@ class Convolution():
 
 
   def dog_sep_convolution(self, img, k, cell_type, originating_function="filter",
-                          force_homebrew = False, mode="full"):
+                          force_homebrew = False, mode="full", is_off_center=False):
     ''' Wrapper for separated convolution for DoG kernels in FoCal, 
         enables use of NumPy based sepfir2d.
         
@@ -87,6 +93,8 @@ class Convolution():
         mode                 => "full" all image convolution, else only valid
     '''
 
+    fill = 0.0 if is_off_center else 0.0
+
     if originating_function == "filter":
         row_keep, col_keep = self.get_subsample_keepers(cell_type)
     else:
@@ -94,13 +102,13 @@ class Convolution():
 
     if not force_homebrew:
       # has a problem with images smaller than kernel
-      right_img = sepfir2d(img.copy(), k[0], k[1])
-      left_img  = sepfir2d(img.copy(), k[2], k[3])
+      right_img = sepfir2d(img.copy(), k[0], k[1])#, mode='same', cval=fill)
+      left_img  = sepfir2d(img.copy(), k[2], k[3])#, mode='same', cval=fill)
     else:
       right_img = self.sep_convolution(img, k[0], k[1], col_keep=col_keep, 
-                                       row_keep=row_keep, mode=mode)
+                                       row_keep=row_keep, mode=mode, fill=fill)
       left_img  = self.sep_convolution(img, k[2], k[3], col_keep=col_keep, 
-                                       row_keep=row_keep, mode=mode )
+                                       row_keep=row_keep, mode=mode, fill=fill)
 
     conv_img = left_img + right_img
 

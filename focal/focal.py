@@ -154,15 +154,19 @@ class Focal():
     convolved_img = {}
 
     for cell_type in range(num_kernels):
-      if img_width < self.MIN_IMG_WIDTH or img_height < self.MIN_IMG_WIDTH:
+      kh, kw = self.kernels.full_kernels[cell_type].shape
+      if img_width < kw or img_height < kh:
         force_homebrew = True
       else:
         force_homebrew = False
-        
+      
+      is_off_centre = cell_type in [0, 2]
       c = self.convolver.dog_sep_convolution(img, self.kernels[cell_type], 
                                              cell_type,
                                              originating_function="filter",
-                                             force_homebrew=force_homebrew)
+                                             force_homebrew=force_homebrew,
+                                             is_off_center=is_off_centre,
+                                             mode='full')
       convolved_img[cell_type] =  c
 
     return convolved_img
