@@ -19,6 +19,8 @@ def main():
 
     if args.dataset.lower() == CIFAR10.lower():
         import cifar_convert as cvt
+    elif args.dataset.lower() == MNIST.lower():
+        import mnist_convert as cvt
     else:
         raise Exception('Dataset not (yet) supported!')
 
