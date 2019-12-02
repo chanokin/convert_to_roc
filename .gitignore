@@ -1,2 +1,5 @@
 spike_files/
 *.pyc
+*npz
+**.ipynb_checkpoints/
+**correlation-cache*
