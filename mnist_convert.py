@@ -5,7 +5,7 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
-from common import num_from_byte_array
+from common import num_from_byte_array, mkdir, f2s
 import struct
 from focal import focal_to_spike
 
@@ -24,31 +24,25 @@ def read_img_file(filename, start_idx = 0, max_num_images = 10000000000, labels=
         
         temp = [f.read(1), f.read(1), f.read(1), f.read(1)]
         cols_per_image = num_from_byte_array(">I", temp)
-
-        img_idx = 0 
-        images = {}
-        max_num_images = start_idx + max_num_images
-        while img_idx < number_images and img_idx < max_num_images:
         
-            if img_idx < start_idx:
-                for r in xrange(rows_per_image):
-                    for c in xrange(cols_per_image):
-                        t = struct.unpack("B", f.read(1))[0]
+        ### 1 <==> from current position
+        f.seek(start_idx * rows_per_image * cols_per_image, 1) 
 
-                img_idx += 1
-                continue
-            
-        img = np.zeros((rows_per_image, cols_per_image))
-        for r in xrange(rows_per_image):
-            for c in xrange(cols_per_image):
-                img[r, c] = struct.unpack("B", f.read(1))[0]
-                        
-        if labels is not None:
-            images[img_idx] = {'img': img, 'lbl': labels[img_idx]}
-        else:
-            images[img_idx] = {'img': img}
+        img_idx = start_idx
+        images = {}
+        max_num_images = min(max_num_images, start_idx + number_images)
+        while img_idx < max_num_images:
+            img = np.zeros((rows_per_image, cols_per_image))
+            for r in xrange(rows_per_image):
+                for c in xrange(cols_per_image):
+                    img[r, c] = struct.unpack("B", f.read(1))[0]
+                            
+            if labels is not None:
+                images[img_idx] = {'img': img, 'lbl': labels[img_idx]}
+            else:
+                images[img_idx] = {'img': img}
 
-        img_idx += 1
+            img_idx += 1
         
     finally:
         f.close()
@@ -65,8 +59,11 @@ def read_label_file(filename, start_idx = 0, max_num_labels = 10000000000000):
         temp = [f.read(1), f.read(1), f.read(1), f.read(1)]
         number_labels = num_from_byte_array(">I", temp)
         
+        # 1 <==> from current position
+        f.seek(start_idx, 1) 
+
         lbl_idx = start_idx
-        max_idx = start_idx + min(number_labels, max_num_labels)
+        max_idx = min(number_labels, start_idx + max_num_labels)
         labels = {}
         while lbl_idx < max_idx:
             labels[lbl_idx] = struct.unpack("B", f.read(1))[0]
@@ -77,27 +74,79 @@ def read_label_file(filename, start_idx = 0, max_num_labels = 10000000000000):
 
     return labels
 
+def check_max_output(out_dir):
+    sets = glob.glob(os.path.join(out_dir, '*'))
+    if 'test' in sets:
+        classes = glob.glob(os.path.join(out_dir, 'test', '*'))
+    else:
+        classes = glob.glob(os.path.join(out_dir, 'train', '*'))
+    
+    max_idx = -1
+    for c in classes:
+        out_files = glob.glob(os.path.join(c, '*.npz'))
+        
+
 def mnist_convert(filenames, out_dir, timestep, spikes_per_bin=1, skip_existing=True):
     n_train, n_test = 60000, 10000
     width = height = 28
     batch_size = 1000
     n_imgs = n_train + n_test
 
+    labels = []
+    images = []
     img = np.zeros((width, height))
     spikes = []
     spk_src = []
-    
+
+    train_dir = os.path.join(out_dir, 'train')
+    mkdir(train_dir)
+    img_fname = [f for f in filenames if f.startswith('train-images')][0]
+    lbl_fname = [f for f in filenames if f.startswith('train-labels')][0]
     for start_idx in range(0, n_train, batch_size):
+        labels[:] = read_label_file(img_fname, start_idx, batch_size)
+        images[:] = read_img_file(img_fname, start_idx, batch_size, labels)
 
-        pc = 100.0*float(start_idx+1)/n_imgs
-        sys.stdout.write('\rconverting {:6.2f}%'.format(pc))
-        sys.stdout.flush()
+        for img_idx in labels:
+            pc = 100.0*float(img_idx+1)/n_imgs
+            sys.stdout.write('\rconverting {:6.2f}%'.format(pc))
+            sys.stdout.flush()
 
+            label = labels[img_idx]
+            img[:] = images[img_idx]
 
-        np.savez_compressed(os.path.join(dirname, fname),
-            label=label, filename=filename, color_image=img, grayscale_image=gray,
-            focal_spikes=spikes, spike_source_array=spk_src, timestep=timestep,
-            batch_index=batch_idx, image_batch_index=img_idx)
+            dirname = os.path.join(train_dir, "{:d}".format(label))
+            fname = 'class_{:06d}_timestep_{}_index_{:06d}.npz'.\
+                format(label, f2s(timestep), img_idx)
+
+            np.savez_compressed(os.path.join(dirname, fname),
+                label=label, color_image=img, grayscale_image=img,
+                focal_spikes=spikes, spike_source_array=spk_src, timestep=timestep,
+                image_batch_index=img_idx)
+
+    test_dir = os.path.join(out_dir, 't10k')
+    mkdir(test_dir)
+    img_fname = [f for f in filenames if f.startswith('t10k-images')][0]
+    lbl_fname = [f for f in filenames if f.startswith('t10k-labels')][0]
+    for start_idx in range(0, n_test, batch_size):
+        labels[:] = read_label_file(img_fname, start_idx, batch_size)
+        images[:] = read_img_file(img_fname, start_idx, batch_size, labels)
+
+        for img_idx in labels:
+            pc = 100.0*float(n_train + img_idx + 1)/n_imgs
+            sys.stdout.write('\rconverting {:6.2f}%'.format(pc))
+            sys.stdout.flush()
+
+            label = labels[img_idx]
+            img[:] = images[img_idx]
+
+            dirname = os.path.join(test_dir, "{:d}".format(label))
+            fname = 'class_{:06d}_timestep_{}_index_{:06d}.npz'.\
+                format(label, f2s(timestep), img_idx)
+
+            np.savez_compressed(os.path.join(dirname, fname),
+                label=label, color_image=img, grayscale_image=img,
+                focal_spikes=spikes, spike_source_array=spk_src, timestep=timestep,
+                image_batch_index=img_idx)
 
     print("\tDone with batch!\n")
 
