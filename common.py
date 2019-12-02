@@ -35,3 +35,24 @@ def unpickle(file):
         else:
             d = pickle.load(fo, encoding='bytes')
     return d
+
+
+def ssa_to_img(ssa, scale, img_shape, power_exp=-1.0, start_time=0.0, end_time=np.inf):
+    max_places = 4 * np.prod(img_shape)
+    max_t = np.max([np.max(ts) for ts in ssa if len(ts)])
+    t2p = max_places / max_t
+    h, w = img_shape
+    n_per_scale = h * w
+    start = scale * n_per_scale
+    end = start + n_per_scale
+    img = np.zeros(img_shape)
+    for pix, neuron in enumerate(range(start, end)):
+        times = np.asarray(ssa[neuron])
+        whr = np.where(np.logical_and(start_time <= times, times < end_time))[0]
+        n_spikes = len(whr)
+        if n_spikes > 0:
+            places = (times[whr] * t2p) + 1
+            img[pix//w, pix%w] = np.sum(places**(power_exp))
+
+    
+    return img
