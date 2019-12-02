@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 from focal import Focal
+import struct
 
 
 FOCAL = Focal(mute_output=True)
@@ -56,3 +57,6 @@ def ssa_to_img(ssa, scale, img_shape, power_exp=-1.0, start_time=0.0, end_time=n
 
     
     return img
+
+def num_from_byte_array(fmt, bytes):
+    return struct.unpack(fmt, "".join(bytes))[0]
