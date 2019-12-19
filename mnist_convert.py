@@ -5,7 +5,7 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
-from common import num_from_byte_array, mkdir, f2s
+from common import num_from_byte_array, mkdir, f2s, FOCAL
 import struct
 from focal import focal_to_spike
 
@@ -84,69 +84,67 @@ def check_max_output(out_dir):
     max_idx = -1
     for c in classes:
         out_files = glob.glob(os.path.join(c, '*.npz'))
-        
+
+
+
+def process(labels, images, n_imgs, out_dir, spikes_per_bin, timestep, log_offset=0):
+    spikes = []
+    img = np.zeros_like(images[0])
+    spk_src = []
+    for img_idx in labels:
+        pc = 100.0*float(img_idx + 1 + log_offset)/n_imgs
+        sys.stdout.write('\rconverting {:6.2f}%'.format(pc))
+        sys.stdout.flush()
+
+        label = labels[img_idx]
+        img[:] = images[img_idx]
+
+        spikes[:] = FOCAL.apply(img)
+        spk_src[:] = focal_to_spike(spikes, img.shape, 
+                                    spikes_per_time_block=spikes_per_bin, 
+                                    start_time=0., time_step=timestep)
+
+        dirname = os.path.join(out_dir, "{:d}".format(label))
+        mkdir(dirname)
+        fname = 'class_{:06d}_timestep_{}_index_{:06d}.npz'.\
+            format(label, f2s(timestep), img_idx)
+
+        np.savez_compressed(os.path.join(dirname, fname),
+            label=label, color_image=img, grayscale_image=img,
+            focal_spikes=spikes, spike_source_array=spk_src, timestep=timestep,
+            image_batch_index=img_idx)
 
 def mnist_convert(filenames, out_dir, timestep, spikes_per_bin=1, skip_existing=True):
     n_train, n_test = 60000, 10000
-    width = height = 28
     batch_size = 1000
     n_imgs = n_train + n_test
 
-    labels = []
-    images = []
-    img = np.zeros((width, height))
-    spikes = []
-    spk_src = []
+    labels = {}
+    images = {}
 
     train_dir = os.path.join(out_dir, 'train')
     mkdir(train_dir)
     img_fname = [f for f in filenames if f.startswith('train-images')][0]
     lbl_fname = [f for f in filenames if f.startswith('train-labels')][0]
     for start_idx in range(0, n_train, batch_size):
-        labels[:] = read_label_file(img_fname, start_idx, batch_size)
-        images[:] = read_img_file(img_fname, start_idx, batch_size, labels)
+        labels.clear()
+        labels = read_label_file(lbl_fname, start_idx, batch_size)
+        images.clear()
+        images = read_img_file(img_fname, start_idx, batch_size, labels)
 
-        for img_idx in labels:
-            pc = 100.0*float(img_idx+1)/n_imgs
-            sys.stdout.write('\rconverting {:6.2f}%'.format(pc))
-            sys.stdout.flush()
-
-            label = labels[img_idx]
-            img[:] = images[img_idx]
-
-            dirname = os.path.join(train_dir, "{:d}".format(label))
-            fname = 'class_{:06d}_timestep_{}_index_{:06d}.npz'.\
-                format(label, f2s(timestep), img_idx)
-
-            np.savez_compressed(os.path.join(dirname, fname),
-                label=label, color_image=img, grayscale_image=img,
-                focal_spikes=spikes, spike_source_array=spk_src, timestep=timestep,
-                image_batch_index=img_idx)
+        process(labels, images, n_imgs, train_dir, spikes_per_bin, timestep, 0)
 
     test_dir = os.path.join(out_dir, 't10k')
     mkdir(test_dir)
     img_fname = [f for f in filenames if f.startswith('t10k-images')][0]
     lbl_fname = [f for f in filenames if f.startswith('t10k-labels')][0]
     for start_idx in range(0, n_test, batch_size):
-        labels[:] = read_label_file(img_fname, start_idx, batch_size)
-        images[:] = read_img_file(img_fname, start_idx, batch_size, labels)
+        labels.clear()
+        labels = read_label_file(lbl_fname, start_idx, batch_size)
+        images.clear()
+        images = read_img_file(img_fname, start_idx, batch_size, labels)
 
-        for img_idx in labels:
-            pc = 100.0*float(n_train + img_idx + 1)/n_imgs
-            sys.stdout.write('\rconverting {:6.2f}%'.format(pc))
-            sys.stdout.flush()
-
-            label = labels[img_idx]
-            img[:] = images[img_idx]
-
-            dirname = os.path.join(test_dir, "{:d}".format(label))
-            fname = 'class_{:06d}_timestep_{}_index_{:06d}.npz'.\
-                format(label, f2s(timestep), img_idx)
-
-            np.savez_compressed(os.path.join(dirname, fname),
-                label=label, color_image=img, grayscale_image=img,
-                focal_spikes=spikes, spike_source_array=spk_src, timestep=timestep,
-                image_batch_index=img_idx)
+        process(labels, images, n_imgs, train_dir, spikes_per_bin, timestep, n_train)
 
     print("\tDone with batch!\n")
 
