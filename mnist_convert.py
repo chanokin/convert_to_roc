@@ -146,7 +146,6 @@ def mnist_convert(filenames, out_dir, timestep, spikes_per_bin=1, skip_existing=
 
         process(labels, images, n_imgs, train_dir, spikes_per_bin, timestep, n_train)
 
-    print("\tDone with batch!\n")
 
 def open_and_convert(in_dir, out_dir, timestep, spikes_per_bin=1, skip_existing=True):
     search_path = os.path.join(os.getcwd(), in_dir, '*')
