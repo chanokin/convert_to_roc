@@ -127,7 +127,8 @@ class Convolution():
         if cell_type > 1:
             #~ col_keep = 7
             #~ row_keep = 7
-            col_keep = 5
+            # col_keep = 5
+            col_keep = 3
             row_keep = 3
         else:
             col_keep = 1
