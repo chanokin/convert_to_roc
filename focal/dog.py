@@ -14,14 +14,16 @@ class DifferenceOfGaussians():
     '''Difference of Gaussian kernel generator. Developed to implement FoCal
     '''
   
-    def __init__(self):
+    def __init__(self, small_image=False):
         '''We simulate four layers of Ganglion cells, so we create their
         kernels here
         '''
         self.max_num_kernels = 4
         self.kernels = None
         self.full_kernels = None
+        self.small_image = small_image
         self.kernels, self.full_kernels = self.create_all_kernels()
+        
 
 
     def __getitem__(self, index):
@@ -162,13 +164,23 @@ class DifferenceOfGaussians():
             sigma_mult = 6.7
         elif cell_centre_type == PARASOL_OFF:
             off_centre = True
-            width = 61
-            sigma = 8
+            if self.small_image:
+                width = 21
+                sigma = 2
+            else:
+                width = 61
+                sigma = 8
+
             sigma_mult = 4.8
         elif cell_centre_type == PARASOL_ON:
             off_centre = False
-            width = 243
-            sigma = 10.4
+            if self.small_image:
+                width = 53
+                sigma = 3.1
+            else:
+                width = 243
+                sigma = 10.4
+
             sigma_mult = 4.8
 
         return off_centre, width, sigma, sigma_mult

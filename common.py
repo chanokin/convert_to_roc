@@ -10,6 +10,7 @@ import struct
 
 
 FOCAL = Focal(mute_output=True)
+FOCAL_S = Focal(mute_output=True, small_image=True)
 NUM_KERNELS = len(FOCAL.kernels.full_kernels) # four simulated layers
 NO_IN_DIR = 'DID_NOT_PASS_THE_INPUT_DIR'
 CIFAR10, MNIST, OMNIGLOT = 'cifar10', 'mnist', 'omniglot'

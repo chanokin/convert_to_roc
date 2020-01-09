@@ -26,13 +26,13 @@ class Focal():
       See DOI: 10.1109/TNN.2010.2048339
   '''
 
-  def __init__(self, mute_output=True):
+  def __init__(self, mute_output=True, small_image=False):
     '''Get the four layer's kernels, create the correlations and
        a convolution wrapper.
        :const MIN_IMG_WIDTH: Minimum image width for which to use 
                              NumPy/SciPy for convolution
     '''
-    self.kernels = DifferenceOfGaussians()
+    self.kernels = DifferenceOfGaussians(small_image)
     self.correlations = Correlation(self.kernels.full_kernels)
     self.convolver = Convolution()
     self.MIN_IMG_WIDTH = 256

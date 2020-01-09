@@ -42,7 +42,7 @@ def cifar_convert(data, out_dir, timestep, spikes_per_bin=1, skip_existing=True)
         filename = data['filenames'][img_idx]
 
 
-        spikes[:] = FOCAL.apply(gray)
+        spikes[:] = FOCAL_S.apply(gray)
         spk_src[:] = focal_to_spike(spikes, gray.shape, 
                                     spikes_per_time_block=spikes_per_bin, 
                                     start_time=0., time_step=timestep)

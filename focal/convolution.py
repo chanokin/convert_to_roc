@@ -128,8 +128,9 @@ class Convolution():
             #~ col_keep = 7
             #~ row_keep = 7
             # col_keep = 5
-            col_keep = 3
-            row_keep = 3
+            # row_keep = 3
+            col_keep = 4
+            row_keep = 4
         else:
             col_keep = 1
             row_keep = 1
