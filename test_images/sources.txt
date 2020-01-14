@@ -1,0 +1,4 @@
+Most are from Kodak test image set:
+http://r0k.us/graphics/kodak/index.html
+
+Lenna is the classical test image though is copyrighted (screw that!)
