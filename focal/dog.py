@@ -166,7 +166,7 @@ class DifferenceOfGaussians():
             off_centre = True
             if self.small_image:
                 width = 21
-                sigma = 2
+                sigma = 2.1
             else:
                 width = 61
                 sigma = 8
@@ -175,8 +175,8 @@ class DifferenceOfGaussians():
         elif cell_centre_type == PARASOL_ON:
             off_centre = False
             if self.small_image:
-                width = 53
-                sigma = 3.1
+                width = 45
+                sigma = 3.3
             else:
                 width = 243
                 sigma = 10.4
