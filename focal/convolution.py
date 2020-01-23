@@ -1,5 +1,7 @@
 import numpy
-from scipy.signal import sepfir2d
+# from scipy.signal import sepfir2d
+from cv2 import sepFilter2D
+import cv2
 
 class Convolution():
     '''
@@ -32,8 +34,9 @@ class Convolution():
             horizontal_range = numpy.arange(width)
             vertical_range   = numpy.arange(height)
         else:
-            horizontal_range = numpy.arange(half_k_width, width  - half_k_width + 1)
-            vertical_range   = numpy.arange(half_k_width, height - half_k_width + 1)
+            s = max(half_k_width//2, 1)
+            horizontal_range = numpy.arange(s, width  - s + 1)
+            vertical_range   = numpy.arange(s, height - s + 1)
 
         for y in numpy.arange(height):
             for x in horizontal_range:
@@ -53,7 +56,7 @@ class Convolution():
 
                 tmp[y,x] = k_sum
 
-        tmp2 = numpy.zeros_like(img, dtype=numpy.float32)
+        tmp2 = numpy.zeros_like(img, dtype='float32')
         for y in vertical_range:
             if (y - half_img_height)%row_keep != 0:
                 continue
@@ -100,14 +103,19 @@ class Convolution():
         else:
             row_keep, col_keep = 1, 1
 
-
         # if not force_homebrew :
-        if cell_type in [0, 1]:
+        # if cell_type in [0, 1]:
             # has a problem with images smaller than kernel
-            center_img = sepfir2d(img.copy(), k[0], k[1])#, mode='same', cval=fill)
-            surround_img  = sepfir2d(img.copy(), k[2], k[3])#, mode='same', cval=fill)
-        else:
-        # if True:
+            
+            # center_img = sepfir2d(img.copy(), k[0], k[1])#, mode='same', cval=fill)
+            # surround_img  = sepfir2d(img.copy(), k[2], k[3])#, mode='same', cval=fill)
+            # center_img = sepFilter2D(img.copy(), -1, k[0], k[1], 
+            #                 borderType=cv2.BORDER_REFLECT_101)
+            # surround_img  = sepFilter2D(img.copy(), -1, k[2], k[3],
+            #                     borderType=cv2.BORDER_REFLECT_101)
+
+        # else:
+        if True:
             center_img = self.sep_convolution(img.copy(), k[0], k[1], 
                             col_keep=col_keep, row_keep=row_keep, mode='valid', fill=fill)
             surround_img  = self.sep_convolution(img.copy(), k[2], k[3], 
@@ -124,13 +132,19 @@ class Convolution():
     def get_subsample_keepers(self, cell_type):
         ''' return which (modulo) columns and rows to keep for cell_type
         '''
-        if cell_type > 1:
-            #~ col_keep = 7
-            #~ row_keep = 7
+        if cell_type == 3:
+            # col_keep = 7
+            # row_keep = 7
+            col_keep = 5
+            row_keep = 5
+        elif cell_type == 2:
             # col_keep = 5
             # row_keep = 3
             col_keep = 4
             row_keep = 4
+        elif cell_type == 1:
+            col_keep = 1
+            row_keep = 1
         else:
             col_keep = 1
             row_keep = 1
