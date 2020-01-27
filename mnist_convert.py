@@ -5,7 +5,7 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
-from common import num_from_byte_array, mkdir, f2s, FOCAL
+from common import num_from_byte_array, mkdir, f2s, FOCAL_S
 import struct
 from focal import focal_to_spike
 
@@ -25,7 +25,7 @@ def read_img_file(filename, start_idx = 0, max_num_images = 10000000000, labels=
         temp = [f.read(1), f.read(1), f.read(1), f.read(1)]
         cols_per_image = num_from_byte_array(">I", temp)
         
-        ### 1 <==> from current position
+        ### 1 <=> from current position
         f.seek(start_idx * rows_per_image * cols_per_image, 1) 
 
         img_idx = start_idx
@@ -89,7 +89,7 @@ def check_max_output(out_dir):
 
 def process(labels, images, n_imgs, out_dir, spikes_per_bin, timestep, log_offset=0):
     spikes = []
-    img = np.zeros_like(images[0])
+    img = np.zeros_like(images[0]['img'])
     spk_src = []
     for img_idx in labels:
         pc = 100.0*float(img_idx + 1 + log_offset)/n_imgs
@@ -97,9 +97,9 @@ def process(labels, images, n_imgs, out_dir, spikes_per_bin, timestep, log_offse
         sys.stdout.flush()
 
         label = labels[img_idx]
-        img[:] = images[img_idx]
+        img[:] = images[img_idx]['img']
 
-        spikes[:] = FOCAL.apply(img)
+        spikes[:] = FOCAL_S.apply(img)
         spk_src[:] = focal_to_spike(spikes, img.shape, 
                                     spikes_per_time_block=spikes_per_bin, 
                                     start_time=0., time_step=timestep)
@@ -124,8 +124,8 @@ def mnist_convert(filenames, out_dir, timestep, spikes_per_bin=1, skip_existing=
 
     train_dir = os.path.join(out_dir, 'train')
     mkdir(train_dir)
-    img_fname = [f for f in filenames if f.startswith('train-images')][0]
-    lbl_fname = [f for f in filenames if f.startswith('train-labels')][0]
+    img_fname = [f for f in filenames if 'train-images' in f][0]
+    lbl_fname = [f for f in filenames if 'train-labels' in f][0]
     for start_idx in range(0, n_train, batch_size):
         labels.clear()
         labels = read_label_file(lbl_fname, start_idx, batch_size)
