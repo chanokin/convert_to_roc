@@ -11,6 +11,7 @@ parser.add_argument('--timestep', type=float, default=1.0)
 parser.add_argument('--output_dir', type=str, default=os.path.join(here, 'output_spikes'))
 parser.add_argument('--skip_existing', type=int, default=1)
 parser.add_argument('--spikes_per_bin', type=int, default=1)
+parser.add_argument('--scaling', type=float, default=1.0)
 args = parser.parse_args()
 
 def main():
@@ -21,11 +22,13 @@ def main():
         import cifar_convert as cvt
     elif args.dataset.lower() == MNIST.lower():
         import mnist_convert as cvt
+    elif args.dataset.lower() == OMNIGLOT.lower():
+        import omniglot_convert as cvt
     else:
         raise Exception('Dataset not (yet) supported!')
 
     cvt.open_and_convert(args.input_dir, args.output_dir, 
-        args.timestep, args.spikes_per_bin, args.skip_existing)
+        args.timestep, args.spikes_per_bin, args.skip_existing, args.scaling)
 
 
 if __name__ == '__main__':

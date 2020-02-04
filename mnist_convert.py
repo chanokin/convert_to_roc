@@ -112,7 +112,7 @@ def process(labels, images, n_imgs, out_dir, spikes_per_bin, timestep, log_offse
         np.savez_compressed(os.path.join(dirname, fname),
             label=label, color_image=img, grayscale_image=img,
             focal_spikes=spikes, spike_source_array=spk_src, timestep=timestep,
-            image_batch_index=img_idx)
+            image_batch_index=img_idx, kernels=FOCAL_S.kernels.full_kernels)
 
 def mnist_convert(filenames, out_dir, timestep, spikes_per_bin=1, skip_existing=True):
     n_train, n_test = 60000, 10000
@@ -147,7 +147,8 @@ def mnist_convert(filenames, out_dir, timestep, spikes_per_bin=1, skip_existing=
         process(labels, images, n_imgs, train_dir, spikes_per_bin, timestep, n_train)
 
 
-def open_and_convert(in_dir, out_dir, timestep, spikes_per_bin=1, skip_existing=True):
+def open_and_convert(in_dir, out_dir, timestep, spikes_per_bin=1, skip_existing=True, 
+                     scaling=1.0):
     search_path = os.path.join(os.getcwd(), in_dir, '*')
     files = sorted( glob.glob(search_path) )
     mnist_convert(files, out_dir, timestep, spikes_per_bin, skip_existing)

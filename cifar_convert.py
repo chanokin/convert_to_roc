@@ -50,11 +50,13 @@ def cifar_convert(data, out_dir, timestep, spikes_per_bin=1, skip_existing=True)
         np.savez_compressed(os.path.join(dirname, fname),
             label=label, filename=filename, color_image=img, grayscale_image=gray,
             focal_spikes=spikes, spike_source_array=spk_src, timestep=timestep,
-            batch_index=batch_idx, image_batch_index=img_idx)
+            batch_index=batch_idx, image_batch_index=img_idx,
+            kernels=FOCAL_S.kernels.full_kernels)
 
     print("\tDone with batch!\n")
 
-def open_and_convert(in_dir, out_dir, timestep, spikes_per_bin=1, skip_existing=True):
+def open_and_convert(in_dir, out_dir, timestep, spikes_per_bin=1, skip_existing=True,
+                    scaling=1.0):
     search_path = os.path.join(os.getcwd(), in_dir, '*')
     files = sorted( glob.glob(search_path) )
     for f in files:

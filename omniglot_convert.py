@@ -5,150 +5,116 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
-from common import num_from_byte_array, mkdir, f2s, FOCAL_S
+from common import num_from_byte_array, mkdir, f2s, FOCAL_S, FOCAL
 import struct
 from focal import focal_to_spike
+import zipfile
 
-def read_img_file(filename, start_idx = 0, max_num_images = 10000000000, labels=None):
-    f = open(filename, "rb")
+
+def safe_dir_name(dir_in, replace_in=('(', ')', ' ',), replace_out=('-', '-', '_')):
+    dir_out = dir_in
+    for i, ch in enumerate(replace_in):
+        dir_out = dir_out.replace(ch, replace_out[i])
+    return dir_out
+
+def extract_to_dict(input_path, file_depth=4, threshold=0.5):
+    BASE, ALPHA, CHAR = range(3)
+
+    zip_file = zipfile.ZipFile(input_path)
+    d = {}
+    for name in zip_file.namelist():
+        split_path = name.split('/')
+
+        if len(split_path) != file_depth:
+            continue
+
+        if split_path[-1] == '':
+            continue
+
+        if split_path[ALPHA] not in d:
+            d[split_path[ALPHA]] = {}
+
+        if split_path[CHAR] not in d[split_path[ALPHA]]:
+            d[split_path[ALPHA]][split_path[CHAR]] = []
+
+        f = zip_file.read(name)
+
+        img = cv2.imdecode(
+                np.frombuffer(f, np.uint8), 
+                cv2.IMREAD_GRAYSCALE).astype('float')
+
+        # invert image --- so high values mean 255 and low mean 0
+        hi = np.where(img > threshold)
+        lo = np.where(img <= threshold)
+        img[lo] = 255.0
+        img[hi] = 0.0
+
+        d[split_path[ALPHA]][split_path[CHAR]].append(img)
+
+    return d
+
+
+def omniglot_convert(file_dict, out_dir, timestep, spikes_per_bin=1, skip_existing=True, 
+                    scaling=1.0):
+    n_total = 0
+    for alpha in file_dict:
+        for char in file_dict[alpha]:
+            n_total += len(file_dict[alpha][char])
     
-    try:
-        temp = [f.read(1), f.read(1), f.read(1), f.read(1)]
-        # magic_number = num_from_byte_array(">I", temp)
-        
-        temp = [f.read(1), f.read(1), f.read(1), f.read(1)]
-        number_images = num_from_byte_array(">I", temp)
-        
-        temp = [f.read(1), f.read(1), f.read(1), f.read(1)]
-        rows_per_image = num_from_byte_array(">I", temp)
-        
-        temp = [f.read(1), f.read(1), f.read(1), f.read(1)]
-        cols_per_image = num_from_byte_array(">I", temp)
-        
-        ### 1 <=> from current position
-        f.seek(start_idx * rows_per_image * cols_per_image, 1) 
+    h, w = file_dict[alpha][char][0].shape
+    if scaling != 1.0:
+        h, w = int(h * scaling), int(w * scaling)
 
-        img_idx = start_idx
-        images = {}
-        max_num_images = min(max_num_images, start_idx + number_images)
-        while img_idx < max_num_images:
-            img = np.zeros((rows_per_image, cols_per_image))
-            for r in xrange(rows_per_image):
-                for c in xrange(cols_per_image):
-                    img[r, c] = struct.unpack("B", f.read(1))[0]
-                            
-            if labels is not None:
-                images[img_idx] = {'img': img, 'lbl': labels[img_idx]}
-            else:
-                images[img_idx] = {'img': img}
-
-            img_idx += 1
-        
-    finally:
-        f.close()
-
-    return images
-
-def read_label_file(filename, start_idx = 0, max_num_labels = 10000000000000):
-    f = open(filename, "rb")
-    
-    try:
-        temp = [f.read(1), f.read(1), f.read(1), f.read(1)]
-        # magic_number = num_from_byte_array(">I", temp)
-        
-        temp = [f.read(1), f.read(1), f.read(1), f.read(1)]
-        number_labels = num_from_byte_array(">I", temp)
-        
-        # 1 <==> from current position
-        f.seek(start_idx, 1) 
-
-        lbl_idx = start_idx
-        max_idx = min(number_labels, start_idx + max_num_labels)
-        labels = {}
-        while lbl_idx < max_idx:
-            labels[lbl_idx] = struct.unpack("B", f.read(1))[0]
-            lbl_idx += 1
-            
-    finally:
-        f.close()
-
-    return labels
-
-def check_max_output(out_dir):
-    sets = glob.glob(os.path.join(out_dir, '*'))
-    if 'test' in sets:
-        classes = glob.glob(os.path.join(out_dir, 'test', '*'))
-    else:
-        classes = glob.glob(os.path.join(out_dir, 'train', '*'))
-    
-    max_idx = -1
-    for c in classes:
-        out_files = glob.glob(os.path.join(c, '*.npz'))
-
-
-
-def process(labels, images, n_imgs, out_dir, spikes_per_bin, timestep, log_offset=0):
+    s_img = np.zeros((h, w))
+    n_processed = 0
     spikes = []
-    img = np.zeros_like(images[0]['img'])
-    spk_src = []
-    for img_idx in labels:
-        pc = 100.0*float(img_idx + 1 + log_offset)/n_imgs
-        sys.stdout.write('\rconverting {:6.2f}%'.format(pc))
-        sys.stdout.flush()
+    ssa = []
+    for a_idx, alpha in enumerate(sorted(file_dict.keys())):
+        safe_alpha = safe_dir_name(alpha)
+        _dir = os.path.join(out_dir, safe_alpha)
+        mkdir(_dir)
 
-        label = labels[img_idx]
-        img[:] = images[img_idx]['img']
+        for ch_idx, char in enumerate(sorted(file_dict[alpha].keys())):
+            _dir = os.path.join(out_dir, alpha, char)
+            mkdir(_dir)
 
-        spikes[:] = FOCAL_S.apply(img)
-        spk_src[:] = focal_to_spike(spikes, img.shape, 
-                                    spikes_per_time_block=spikes_per_bin, 
-                                    start_time=0., time_step=timestep)
-
-        dirname = os.path.join(out_dir, "{:d}".format(label))
-        mkdir(dirname)
-        fname = 'class_{:06d}_timestep_{}_index_{:06d}.npz'.\
-            format(label, f2s(timestep), img_idx)
-
-        np.savez_compressed(os.path.join(dirname, fname),
-            label=label, color_image=img, grayscale_image=img,
-            focal_spikes=spikes, spike_source_array=spk_src, timestep=timestep,
-            image_batch_index=img_idx)
-
-def mnist_convert(filenames, out_dir, timestep, spikes_per_bin=1, skip_existing=True):
-    n_train, n_test = 60000, 10000
-    batch_size = 1000
-    n_imgs = n_train + n_test
-
-    labels = {}
-    images = {}
-
-    train_dir = os.path.join(out_dir, 'train')
-    mkdir(train_dir)
-    img_fname = [f for f in filenames if 'train-images' in f][0]
-    lbl_fname = [f for f in filenames if 'train-labels' in f][0]
-    for start_idx in range(0, n_train, batch_size):
-        labels.clear()
-        labels = read_label_file(lbl_fname, start_idx, batch_size)
-        images.clear()
-        images = read_img_file(img_fname, start_idx, batch_size, labels)
-
-        process(labels, images, n_imgs, train_dir, spikes_per_bin, timestep, 0)
-
-    test_dir = os.path.join(out_dir, 't10k')
-    mkdir(test_dir)
-    img_fname = [f for f in filenames if f.startswith('t10k-images')][0]
-    lbl_fname = [f for f in filenames if f.startswith('t10k-labels')][0]
-    for start_idx in range(0, n_test, batch_size):
-        labels.clear()
-        labels = read_label_file(lbl_fname, start_idx, batch_size)
-        images.clear()
-        images = read_img_file(img_fname, start_idx, batch_size, labels)
-
-        process(labels, images, n_imgs, train_dir, spikes_per_bin, timestep, n_train)
+            for i_idx, img in enumerate(file_dict[alpha][char]):
+                pc = 100.0*float(n_processed + 1)/n_total
+                sys.stdout.write('\rconverting {:6.2f}%'.format(pc))
+                sys.stdout.flush()
+                fname = 'alpha_{}_class_{:06d}_timestep_{}_index_{:06d}.npz'.\
+                            format(safe_alpha, ch_idx, f2s(timestep), i_idx)
+                out_path = os.path.join(_dir, fname)
+                if os.path.isfile(out_path) and skip_existing:
+                    n_processed += 1
+                    continue
 
 
-def open_and_convert(in_dir, out_dir, timestep, spikes_per_bin=1, skip_existing=True):
-    search_path = os.path.join(os.getcwd(), in_dir, '*')
-    files = sorted( glob.glob(search_path) )
-    mnist_convert(files, out_dir, timestep, spikes_per_bin, skip_existing)
+                if scaling != 1.0:
+                    s_img[:] = np.clip(
+                                cv2.resize(img, (w, h), interpolation=cv2.INTER_CUBIC),
+                                0.0, 255.0)
+                else:
+                    s_img[:] = img
+
+                fcl = FOCAL_S if w <= 64 else FOCAL
+                spikes[:] = fcl.apply(s_img)
+                ssa[:] = focal_to_spike(spikes, s_img.shape,          
+                            spikes_per_time_block=spikes_per_bin, 
+                            start_time=0., time_step=timestep)
+                
+                np.savez_compressed(out_path,
+                    label=ch_idx, color_image=img, grayscale_image=img, 
+                    scaled_image=s_img, focal_spikes=spikes, spike_source_array=ssa, 
+                    timestep=timestep, image_batch_index=i_idx, scaling=scaling,
+                    kernels=fcl.kernels.full_kernels)
+
+                n_processed += 1
+
+
+def open_and_convert(in_dir, out_dir, timestep, spikes_per_bin=1, skip_existing=True, 
+                    scaling=1.0):
+    fpath = os.path.join(in_dir, 'images_background.zip')
+    files = extract_to_dict(fpath, file_depth=4, threshold=0.5)
+    omniglot_convert(files, out_dir, timestep, spikes_per_bin, skip_existing, scaling)
 

@@ -125,6 +125,7 @@ class Convolution():
 
         if not force_homebrew and originating_function == "filter":
             conv_img = self.subsample(conv_img, cell_type)
+            # conv_img[:] = numpy.clip(conv_img, 0.0, numpy.inf)
 
         return conv_img
 
