@@ -1,7 +1,23 @@
 # Utility scripts to convert different image datasets into rank-order coded spiking representations. 
 
 
+**Usage:**
 
+   `python convert.py dataset path/to/input/files [options]`
+
+    --timestep         Timestep which will be used in the simulations. How many spikes will be emmited 
+                       at each timestep can be set with --spikes_per_bin
+    --output_dir       Path to the output location of the generated spike files
+    --skip_existing    Whether to skip database entries corresponding to files already found in the 
+                       output directory
+    --spikes_per_bin   How many spikes per timestep will be emmited. Note that more than one is not 
+                       standard rank-order encoding
+    --scaling          Scaling applied to the input image (only supported by the Omniglot dataset)
+
+    
+---    
+
+## About the datasets and conversion method:
 
 1. ___Databases___ in this repository are the property of their authors:
 
