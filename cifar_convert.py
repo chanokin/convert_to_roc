@@ -8,6 +8,10 @@ import cv2
 from common import *
 from focal import focal_to_spike
 
+WRED, WBLUE = 0.299, 0.114
+WGREEN = 1.0 - WRED - WBLUE
+RED, GREEN, BLUE = range(3)
+
 def row_to_mat(img, width, height, channels):
     return np.rollaxis(img.reshape(channels, width, height), 0, channels)
 
@@ -19,6 +23,15 @@ def cifar_convert(data, out_dir, timestep, spikes_per_bin=1, skip_existing=True)
     gray = np.zeros((width, height))
     spikes = []
     spk_src = []
+
+    bmg = np.zeros((width, height))
+    bmg_spikes = []
+    bmg_spk_src = []
+
+    rmg = np.zeros((width, height))
+    rmg_spikes = []
+    rmg_spk_src = []
+
     batch_idx = 'test' if 'test' in data['batch_label'] else data['batch_label'][-6]
     
     for img_idx in range(n_imgs)[:]:
@@ -38,12 +51,26 @@ def cifar_convert(data, out_dir, timestep, spikes_per_bin=1, skip_existing=True)
             continue
 
         img[:] = row_to_mat(data['data'][img_idx], width, height, channels)
-        gray[:] = cv2.cvtColor(img.astype('uint8'), cv2.COLOR_BGR2GRAY).astype('float')
-        filename = data['filenames'][img_idx]
+        img /= 255.0
+        gray[:] =\
+             img[:, :, RED] * WRED + img[:, :, GREEN] * WGREEN + img[:, :, BLUE] * WBLUE
+        bmg[:] = img[:, :, BLUE] - gray + 0.5
+        rmg[:] = img[:, :, RED] - gray + 0.5
 
+        filename = data['filenames'][img_idx]
 
         spikes[:] = FOCAL_S.apply(gray)
         spk_src[:] = focal_to_spike(spikes, gray.shape, 
+                                    spikes_per_time_block=spikes_per_bin, 
+                                    start_time=0., time_step=timestep)
+
+        bmg_spikes[:] = FOCAL_S.apply(bmg)
+        bmg_spk_src[:] = focal_to_spike(bmg_spikes, bmg.shape, 
+                                    spikes_per_time_block=spikes_per_bin, 
+                                    start_time=0., time_step=timestep)
+
+        rmg_spikes[:] = FOCAL_S.apply(rmg)
+        rmg_spk_src[:] = focal_to_spike(rmg_spikes, rmg.shape, 
                                     spikes_per_time_block=spikes_per_bin, 
                                     start_time=0., time_step=timestep)
 
@@ -51,7 +78,10 @@ def cifar_convert(data, out_dir, timestep, spikes_per_bin=1, skip_existing=True)
             label=label, filename=filename, color_image=img, grayscale_image=gray,
             focal_spikes=spikes, spike_source_array=spk_src, timestep=timestep,
             batch_index=batch_idx, image_batch_index=img_idx,
-            kernels=FOCAL_S.kernels.full_kernels)
+            kernels=FOCAL_S.kernels.full_kernels,
+            bmg_image=bmg, bmg_spikes=bmg_spikes, bmg_spk_src=bmg_spk_src,
+            rmg_image=rmg, rmg_spikes=rmg_spikes, rmg_spk_src=rmg_spk_src,
+            )
 
     print("\tDone with batch!\n")
 
