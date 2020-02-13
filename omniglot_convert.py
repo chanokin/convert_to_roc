@@ -63,7 +63,10 @@ def omniglot_convert(file_dict, out_dir, timestep, spikes_per_bin=1, skip_existi
     
     h, w = file_dict[alpha][char][0].shape
     if scaling != 1.0:
+        sys.stdout.write('\t\tscaling input image from shape {}'.format((h, w)))
         h, w = int(h * scaling), int(w * scaling)
+        sys.stdout.write(' to {}\n\n'.format((h, w)))
+        sys.stdout.flush()
 
     s_img = np.zeros((h, w))
     n_processed = 0

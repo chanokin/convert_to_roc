@@ -3,7 +3,7 @@
 
 **Usage:**
 
-   `python convert.py dataset path/to/input/files [options]`
+    python convert.py dataset path/to/input/files [options]
 
     --timestep         Timestep which will be used in the simulations. How many spikes will be emmited 
                        at each timestep can be set with --spikes_per_bin
@@ -22,8 +22,11 @@
 1. ___Databases___ in this repository are the property of their authors:
 
    * __[CIFAR-10](https://www.cs.toronto.edu/~kriz/cifar.html)__: [Alex Krizhevsky, (2009). Learning Multiple Layers of Features from Tiny Images](https://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf)
+      * This database has color images which get transformed into a YUV encoding. The conversion outpus rank-order coded spikes for each of the images (grayscale [Y], blue-yellow [U],  red-green [V])
    * __[MNIST](http://yann.lecun.com/exdb/mnist/)__: [Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner. Gradient-based learning applied to document recognition.](http://yann.lecun.com/exdb/publis/index.html#lecun-98) Proceedings of the IEEE, 86(11):2278-2324, November 1998.
+      * The images in the dataset are converted so that background value is 0 and digit regions values are 255. The output is rank-order coded spikes from the 28x28 images.
    * __[OMNIGLOT](https://github.com/brendenlake/omniglot)__: [Lake, B. M., Salakhutdinov, R., and Tenenbaum, J. B. (2015). Human-level concept learning through probabilistic program induction.](http://www.sciencemag.org/content/350/6266/1332.short) _Science_, 350(6266), 1332-1338.
+      * The images in the dataset are converted so that background value is 0 and digit regions values are greater than 0; furthermore, the images are scaled using the `--scaling` parameter. The output is rank-order coded spikes from the scaled images.
 
 2. The (grayscale) ___transformation method___ was:
    * Created by __[Basabdatta Sen Bhattacharya](https://sites.google.com/site/bsenbhattacharya/)__

@@ -81,6 +81,7 @@ def cifar_convert(data, out_dir, timestep, spikes_per_bin=1, skip_existing=True)
             kernels=FOCAL_S.kernels.full_kernels,
             bmg_image=bmg, bmg_spikes=bmg_spikes, bmg_spk_src=bmg_spk_src,
             rmg_image=rmg, rmg_spikes=rmg_spikes, rmg_spk_src=rmg_spk_src,
+            wred=WRED, wgreen=WGREEN, wblue=WBLUE,
             )
 
     print("\tDone with batch!\n")

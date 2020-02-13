@@ -20,7 +20,7 @@ parser.add_argument('--skip_existing', type=int, default=1,
 parser.add_argument('--spikes_per_bin', type=int, default=1,
                     help='How many spikes per timestep will be emmited. Note that more '
                     ' than one is not standard rank-order encoding.')
-parser.add_argument('--scaling', type=float, default=1.0,
+parser.add_argument('--scaling', type=float, default=0.54,
                     help='Scaling applied to the input image (only supported by the '
                     ' Omniglot dataset)')
 args = parser.parse_args()

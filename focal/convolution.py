@@ -136,13 +136,13 @@ class Convolution():
         if cell_type == 3:
             # col_keep = 7
             # row_keep = 7
-            col_keep = 5
-            row_keep = 5
+            col_keep = 3
+            row_keep = 3
         elif cell_type == 2:
             # col_keep = 5
             # row_keep = 3
-            col_keep = 4
-            row_keep = 4
+            col_keep = 3
+            row_keep = 3
         elif cell_type == 1:
             col_keep = 1
             row_keep = 1
