@@ -63,7 +63,7 @@ def omniglot_convert(file_dict, out_dir, timestep, spikes_per_bin=1, skip_existi
     
     h, w = file_dict[alpha][char][0].shape
     if scaling != 1.0:
-        sys.stdout.write('\t\tscaling input image from shape {}'.format((h, w)))
+        sys.stdout.write('\tscaling input image from shape {}'.format((h, w)))
         h, w = int(h * scaling), int(w * scaling)
         sys.stdout.write(' to {}\n\n'.format((h, w)))
         sys.stdout.flush()
@@ -78,7 +78,7 @@ def omniglot_convert(file_dict, out_dir, timestep, spikes_per_bin=1, skip_existi
         mkdir(_dir)
 
         for ch_idx, char in enumerate(sorted(file_dict[alpha].keys())):
-            _dir = os.path.join(out_dir, alpha, char)
+            _dir = os.path.join(out_dir, safe_alpha, char)
             mkdir(_dir)
 
             for i_idx, img in enumerate(file_dict[alpha][char]):
@@ -110,10 +110,11 @@ def omniglot_convert(file_dict, out_dir, timestep, spikes_per_bin=1, skip_existi
                     label=ch_idx, color_image=img, grayscale_image=img, 
                     scaled_image=s_img, focal_spikes=spikes, spike_source_array=ssa, 
                     timestep=timestep, image_batch_index=i_idx, scaling=scaling,
-                    kernels=fcl.kernels.full_kernels)
+                    kernels=fcl.kernels.full_kernels, alphabet=alpha, alpha_idx=a_idx)
 
                 n_processed += 1
-
+    sys.stdout.write("\n\ndone!\n")
+    sys.stdout.flush()
 
 def open_and_convert(in_dir, out_dir, timestep, spikes_per_bin=1, skip_existing=True, 
                     scaling=1.0):
