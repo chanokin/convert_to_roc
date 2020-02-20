@@ -15,7 +15,8 @@ RED, GREEN, BLUE = range(3)
 def row_to_mat(img, width, height, channels):
     return np.rollaxis(img.reshape(channels, width, height), 0, channels)
 
-def cifar_convert(data, out_dir, timestep, spikes_per_bin=1, skip_existing=True):
+def cifar_convert(data, out_dir, percent, timestep, spikes_per_bin=1, 
+                  skip_existing=True):
     n_imgs, n_pixels = data['data'].shape
     channels = 3 #rgb images!
     width = height = int(np.sqrt(n_pixels/channels)) #assuming squared images
@@ -59,17 +60,17 @@ def cifar_convert(data, out_dir, timestep, spikes_per_bin=1, skip_existing=True)
 
         filename = data['filenames'][img_idx]
 
-        spikes[:] = FOCAL_S.apply(gray)
+        spikes[:] = FOCAL_S.apply(gray, percent)
         spk_src[:] = focal_to_spike(spikes, gray.shape, 
                                     spikes_per_time_block=spikes_per_bin, 
                                     start_time=0., time_step=timestep)
 
-        bmg_spikes[:] = FOCAL_S.apply(bmg)
+        bmg_spikes[:] = FOCAL_S.apply(bmg, percent)
         bmg_spk_src[:] = focal_to_spike(bmg_spikes, bmg.shape, 
                                     spikes_per_time_block=spikes_per_bin, 
                                     start_time=0., time_step=timestep)
 
-        rmg_spikes[:] = FOCAL_S.apply(rmg)
+        rmg_spikes[:] = FOCAL_S.apply(rmg, percent)
         rmg_spk_src[:] = focal_to_spike(rmg_spikes, rmg.shape, 
                                     spikes_per_time_block=spikes_per_bin, 
                                     start_time=0., time_step=timestep)
@@ -86,8 +87,8 @@ def cifar_convert(data, out_dir, timestep, spikes_per_bin=1, skip_existing=True)
 
     print("\tDone with batch!\n")
 
-def open_and_convert(in_dir, out_dir, timestep, spikes_per_bin=1, skip_existing=True,
-                    scaling=1.0):
+def open_and_convert(in_dir, out_dir, percent, timestep, spikes_per_bin=1, 
+                     skip_existing=True, scaling=1.0):
     search_path = os.path.join(os.getcwd(), in_dir, '*')
     files = sorted( glob.glob(search_path) )
     for f in files:
@@ -95,6 +96,7 @@ def open_and_convert(in_dir, out_dir, timestep, spikes_per_bin=1, skip_existing=
         #       the user just extracted to a directory
         if '_batch' in f: 
             print("Converting batch: {}".format(f))
-            cifar_convert(unpickle(f), out_dir, timestep, spikes_per_bin, skip_existing)
+            cifar_convert(unpickle(f), out_dir, percent timestep, 
+                          spikes_per_bin, skip_existing)
 
 

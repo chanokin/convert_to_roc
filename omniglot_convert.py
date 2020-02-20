@@ -54,8 +54,8 @@ def extract_to_dict(input_path, file_depth=4, threshold=0.5):
     return d
 
 
-def omniglot_convert(file_dict, out_dir, timestep, spikes_per_bin=1, skip_existing=True, 
-                    scaling=1.0):
+def omniglot_convert(file_dict, out_dir, percent, timestep, spikes_per_bin=1, 
+                     skip_existing=True, scaling=1.0):
     n_total = 0
     for alpha in file_dict:
         for char in file_dict[alpha]:
@@ -101,7 +101,7 @@ def omniglot_convert(file_dict, out_dir, timestep, spikes_per_bin=1, skip_existi
                     s_img[:] = img
 
                 fcl = FOCAL_S if w <= 64 else FOCAL
-                spikes[:] = fcl.apply(s_img)
+                spikes[:] = fcl.apply(s_img, percent)
                 ssa[:] = focal_to_spike(spikes, s_img.shape,          
                             spikes_per_time_block=spikes_per_bin, 
                             start_time=0., time_step=timestep)
@@ -116,9 +116,10 @@ def omniglot_convert(file_dict, out_dir, timestep, spikes_per_bin=1, skip_existi
     sys.stdout.write("\n\ndone!\n")
     sys.stdout.flush()
 
-def open_and_convert(in_dir, out_dir, timestep, spikes_per_bin=1, skip_existing=True, 
-                    scaling=1.0):
+def open_and_convert(in_dir, out_dir, percent, timestep, spikes_per_bin=1, 
+                    skip_existing=True, scaling=1.0):
     fpath = os.path.join(in_dir, 'images_background.zip')
     files = extract_to_dict(fpath, file_depth=4, threshold=0.5)
-    omniglot_convert(files, out_dir, timestep, spikes_per_bin, skip_existing, scaling)
+    omniglot_convert(files, out_dir, percent, timestep, spikes_per_bin, 
+                     skip_existing, scaling)
 

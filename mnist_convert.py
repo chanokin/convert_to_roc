@@ -74,20 +74,9 @@ def read_label_file(filename, start_idx = 0, max_num_labels = 10000000000000):
 
     return labels
 
-def check_max_output(out_dir):
-    sets = glob.glob(os.path.join(out_dir, '*'))
-    if 'test' in sets:
-        classes = glob.glob(os.path.join(out_dir, 'test', '*'))
-    else:
-        classes = glob.glob(os.path.join(out_dir, 'train', '*'))
-    
-    max_idx = -1
-    for c in classes:
-        out_files = glob.glob(os.path.join(c, '*.npz'))
 
-
-
-def process(labels, images, n_imgs, out_dir, spikes_per_bin, timestep, log_offset=0):
+def process(labels, images, n_imgs, out_dir, spikes_per_bin, timestep, 
+            log_offset=0, percent=0.3):
     spikes = []
     img = np.zeros_like(images[0]['img'])
     spk_src = []
@@ -99,7 +88,7 @@ def process(labels, images, n_imgs, out_dir, spikes_per_bin, timestep, log_offse
         label = labels[img_idx]
         img[:] = images[img_idx]['img']
 
-        spikes[:] = FOCAL_S.apply(img)
+        spikes[:] = FOCAL_S.apply(img, percent)
         spk_src[:] = focal_to_spike(spikes, img.shape, 
                                     spikes_per_time_block=spikes_per_bin, 
                                     start_time=0., time_step=timestep)
@@ -114,7 +103,8 @@ def process(labels, images, n_imgs, out_dir, spikes_per_bin, timestep, log_offse
             focal_spikes=spikes, spike_source_array=spk_src, timestep=timestep,
             image_batch_index=img_idx, kernels=FOCAL_S.kernels.full_kernels)
 
-def mnist_convert(filenames, out_dir, timestep, spikes_per_bin=1, skip_existing=True):
+def mnist_convert(filenames, out_dir, percent, timestep, spikes_per_bin=1, 
+                  skip_existing=True):
     n_train, n_test = 60000, 10000
     batch_size = 1000
     n_imgs = n_train + n_test
@@ -132,7 +122,8 @@ def mnist_convert(filenames, out_dir, timestep, spikes_per_bin=1, skip_existing=
         images.clear()
         images = read_img_file(img_fname, start_idx, batch_size, labels)
 
-        process(labels, images, n_imgs, train_dir, spikes_per_bin, timestep, 0)
+        process(labels, images, n_imgs, train_dir, spikes_per_bin, 
+                timestep, 0, percent)
 
     test_dir = os.path.join(out_dir, 't10k')
     mkdir(test_dir)
@@ -144,12 +135,13 @@ def mnist_convert(filenames, out_dir, timestep, spikes_per_bin=1, skip_existing=
         images.clear()
         images = read_img_file(img_fname, start_idx, batch_size, labels)
 
-        process(labels, images, n_imgs, train_dir, spikes_per_bin, timestep, n_train)
+        process(labels, images, n_imgs, train_dir, spikes_per_bin, 
+                timestep, n_train, percent)
 
 
-def open_and_convert(in_dir, out_dir, timestep, spikes_per_bin=1, skip_existing=True, 
-                     scaling=1.0):
+def open_and_convert(in_dir, out_dir, percent, timestep, 
+                     spikes_per_bin=1, skip_existing=True, scaling=1.0):
     search_path = os.path.join(os.getcwd(), in_dir, '*')
     files = sorted( glob.glob(search_path) )
-    mnist_convert(files, out_dir, timestep, spikes_per_bin, skip_existing)
+    mnist_convert(files, out_dir, percent, timestep, spikes_per_bin, skip_existing)
 

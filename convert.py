@@ -12,6 +12,11 @@ parser.add_argument('input_dir', type=str, default=NO_IN_DIR,
 parser.add_argument('--timestep', type=float, default=1.0, 
                     help='Timestep which will be used in the simulations. How many spikes'
                     ' will be emmited at each timestep can be set with --spikes_per_bin')
+
+parser.add_argument('--percent', type=float, default=0.3, 
+                    help='How many of the possible spikes (number of pixels) should we '
+                    ' output. Percent (0.0 < p <= 1.0)')
+
 parser.add_argument('--output_dir', type=str, default=os.path.join(here, 'output_spikes'),
                     help='Path to the output location of the generated spike files')
 parser.add_argument('--skip_existing', type=int, default=1,
@@ -38,7 +43,7 @@ def main():
     else:
         raise Exception('Dataset not (yet) supported!')
 
-    cvt.open_and_convert(args.input_dir, args.output_dir, 
+    cvt.open_and_convert(args.input_dir, args.output_dir, args.percent,
         args.timestep, args.spikes_per_bin, args.skip_existing, args.scaling)
 
 

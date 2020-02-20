@@ -7,6 +7,8 @@
 
     --timestep         Timestep which will be used in the simulations. How many spikes will be emmited 
                        at each timestep can be set with --spikes_per_bin
+    --percent          How many of the possible spikes (number of pixels) should we 
+                       output. Percent (0.0 < p <= 1.0)
     --output_dir       Path to the output location of the generated spike files
     --skip_existing    Whether to skip database entries corresponding to files already found in the 
                        output directory
