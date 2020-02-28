@@ -4,7 +4,8 @@
 **Usage:**
 
     python convert.py dataset path/to/input/files [options]
-
+      dataset          One of the supported datasets {cifar10, mnist, omniglot} 
+      path             Where can the script find the standard dataset file(s)
     --timestep         Timestep which will be used in the simulations. How many spikes will be emmited 
                        at each timestep can be set with --spikes_per_bin
     --percent          How many of the possible spikes (number of pixels) should we 
