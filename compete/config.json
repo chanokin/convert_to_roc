@@ -1,0 +1,126 @@
+{
+    "channels":{
+        "red": 0, "green": 1, "blue": 2
+    },
+    "source":{
+        "luma": {
+            "action": "convert",
+            "red": 0.299, "green": 0.587, "blue": 0.114
+        },
+        "red":{
+            "action": "select",
+            "channel": "red"
+        },
+        "green":{
+            "action": "select",
+            "channel": "green"
+        },
+        "blue":{
+            "action": "select",
+            "channel": "blue"
+        },
+        "yellow": {
+            "action": "convert",
+            "red": 0.413, "green": 0.587
+        }
+    },
+    "encoders":{
+        "luma":{
+            "kernel_type": "center-surround",
+            "competitors":{
+                "0": {
+                    "input": "luma",
+                    "center_std_dev": 0.8,
+                    "surround_mult": 6.7,
+                    "kernel_width": 5,
+                    "off_center": true,
+                    "sampling": 1
+                },
+                "1": {
+                    "input": "luma",
+                    "center_std_dev": 1.04,
+                    "surround_mult": 6.7,
+                    "kernel_width": 11,
+                    "off_center": false,
+                    "sampling": 1
+                },
+                "2": {
+                    "input": "luma",
+                    "center_std_dev": 8,
+                    "surround_mult": 4.8,
+                    "kernel_width": 61,
+                    "off_center": true,
+                    "sampling": 5
+                },
+                "3": {
+                    "input": "luma",
+                    "center_std_dev": 10.4,
+                    "surround_mult": 4.8,
+                    "kernel_width": 243,
+                    "off_center": false,
+                    "sampling": 5
+                }
+
+            }
+        },
+        "blue-yellow":{
+            "kernel_type": "gaussian",
+            "competitors":{
+                "blue0": {
+                    "input": "blue",
+                    "std_dev": 1.1,
+                    "kernel_width": 11,
+                    "sampling": 3
+                },
+                "blue1": {
+                    "input": "blue",
+                    "std_dev": 2.1,
+                    "kernel_width": 21,
+                    "sampling": 7
+                },
+                "yellow0": {
+                    "input": "yellow",
+                    "std_dev": 1.1,
+                    "kernel_width": 11,
+                    "sampling": 3
+                },
+                "yellow1": {
+                    "input": "yellow",
+                    "std_dev": 2.1,
+                    "kernel_width": 21,
+                    "sampling": 7
+                }
+            }
+        },
+        "red-green":{
+            "kernel_type": "gaussian",
+            "competitors":{
+                "red0": {
+                    "input": "red",
+                    "std_dev": 1.1,
+                    "kernel_width": 11,
+                    "sampling": 3
+                },
+                "red1": {
+                    "input": "red",
+                    "std_dev": 2.1,
+                    "kernel_width": 21,
+                    "sampling": 7
+                },
+                "green0": {
+                    "input": "green",
+                    "std_dev": 1.1,
+                    "kernel_width": 11,
+                    "sampling": 3
+                },
+                "green1": {
+                    "input": "green",
+                    "std_dev": 2.1,
+                    "kernel_width": 21,
+                    "sampling": 7
+                }
+            }
+        }
+    }
+
+}
