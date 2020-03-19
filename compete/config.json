@@ -2,7 +2,7 @@
     "channels":{
         "red": 0, "green": 1, "blue": 2
     },
-    "source":{
+    "sources":{
         "luma": {
             "action": "convert",
             "red": 0.299, "green": 0.587, "blue": 0.114
@@ -21,7 +21,7 @@
         },
         "yellow": {
             "action": "convert",
-            "red": 0.413, "green": 0.587
+            "red": 0.4, "green": 0.5
         }
     },
     "encoders":{

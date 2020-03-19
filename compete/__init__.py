@@ -1,5 +1,2 @@
-import argparse
-import os
-import sys
-import json
- 
+from .competitor import Competitor
+from .competition import Competition
