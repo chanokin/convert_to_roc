@@ -107,7 +107,7 @@ def omniglot_convert(file_dict, out_dir, percent, timestep, spikes_per_bin=1,
                             start_time=0., time_step=timestep)
                 kernels = {k: fcl.kernels.full_kernels[k] 
                            for k in fcl.kernels.full_kernels}
-                print(kernels)
+                # print(kernels)
                 keepers = {k: fcl.convolver.get_subsample_keepers(k) 
                            for k in kernels}
                 np.savez_compressed(out_path,
