@@ -21,7 +21,7 @@ def mkdir(path):
         if not os.path.isdir(path):
             os.makedirs(path)
     else:
-        os.makdedirs(path, exist_ok=True)
+        os.makedirs(path, exist_ok=True)
 
 def show(img, cmap=None):
     #shortcut

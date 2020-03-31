@@ -9,7 +9,7 @@ from common import num_from_byte_array, mkdir, f2s, FOCAL_S, FOCAL
 import struct
 from focal import focal_to_spike
 import zipfile
-
+import copy
 
 def safe_dir_name(dir_in, replace_in=('(', ')', ' ',), replace_out=('-', '-', '_')):
     dir_out = dir_in
@@ -105,12 +105,16 @@ def omniglot_convert(file_dict, out_dir, percent, timestep, spikes_per_bin=1,
                 ssa[:] = focal_to_spike(spikes, s_img.shape,          
                             spikes_per_time_block=spikes_per_bin, 
                             start_time=0., time_step=timestep)
-                
+                kernels = {k: fcl.kernels.full_kernels[k] 
+                           for k in fcl.kernels.full_kernels}
+                print(kernels)
+                keepers = {k: fcl.convolver.get_subsample_keepers(k) 
+                           for k in kernels}
                 np.savez_compressed(out_path,
                     label=ch_idx, color_image=img, grayscale_image=img, 
                     scaled_image=s_img, focal_spikes=spikes, spike_source_array=ssa, 
                     timestep=timestep, image_batch_index=i_idx, scaling=scaling,
-                    kernels=fcl.kernels.full_kernels, alphabet=alpha, alpha_idx=a_idx)
+                    kernels=kernels, alphabet=alpha, alpha_idx=a_idx, keepers=keepers)
 
                 n_processed += 1
     sys.stdout.write("\n\ndone!\n")
