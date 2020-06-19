@@ -3,7 +3,6 @@ import sys
 import pickle
 import glob
 import numpy as np
-import matplotlib.pyplot as plt
 import cv2
 from common import num_from_byte_array, mkdir, f2s, FOCAL_S, FOCAL
 import struct
@@ -48,7 +47,7 @@ def extract_to_dict(input_path, file_depth=4, threshold=0.5):
         lo = np.where(img <= threshold)
         img[lo] = 255.0
         img[hi] = 0.0
-
+        
         d[split_path[ALPHA]][split_path[CHAR]].append(img)
 
     return d
@@ -99,7 +98,13 @@ def omniglot_convert(file_dict, out_dir, percent, timestep, spikes_per_bin=1,
                                 0.0, 255.0)
                 else:
                     s_img[:] = img
-
+                
+                whr = np.where(s_img > 0)
+                r0 = -(np.mean(whr[0]) - (h // 2))
+                c0 = -(np.mean(whr[1]) - (w // 2))
+                T = np.float32([[1, 0, c0], [0, 1, r0]])
+                s_img[:] = cv2.warpAffine(s_img, T, (w, h)) 
+                
                 fcl = FOCAL_S if w <= 64 else FOCAL
                 spikes[:] = fcl.apply(s_img, percent)
                 ssa[:] = focal_to_spike(spikes, s_img.shape,          

@@ -3,7 +3,6 @@ from .convolution import *
 from .correlation import *
 from .dog import *
 
-import pylab as plt
 
 idx_to_name = ["midget_off", "midget_on", "parasol_off", "parasol_on"]
 
@@ -48,6 +47,7 @@ def spike_trains_to_images_g(spike_trains, base_img, num_kernels=4):
 
 
 def plot_images(images, original_img=None, use_abs_vals=False):
+    import matplotlib.pyplot as plt
     '''Create a figure with:
          - If images is a dictionary: all images in it
          - If original_img is not None: Two pictures (original and images)
@@ -97,7 +97,7 @@ def plot_images(images, original_img=None, use_abs_vals=False):
     plt.close("all")
 
 
-def save_images(images, prefix, cmap=plt.cm.Greys_r, title_source=idx_to_name): #plt.cm.Paired
+def save_images(images, prefix, cmap='grey', title_source=idx_to_name): #plt.cm.Paired
     '''Save figures with filename = prefix-cell_type if images is a dictionary
                          filename = prefix otherwise
     '''
@@ -179,6 +179,7 @@ def raster_plot_spike(spikes, marker='|', markersize=2):
     '''Plot PyNN SpikeSourceArrays
         :param spikes: The array containing spikes
     '''
+    import matplotlib.pyplot as plt
     x = []
     y = []
     

@@ -2,11 +2,11 @@
 
 import numpy
 from scipy.signal import sepfir2d, convolve2d
-import matplotlib.image as mpimg
-from matplotlib import cm
-import matplotlib.animation as animation
-import matplotlib.pyplot as plt
-from matplotlib.colors import BoundaryNorm
+#import matplotlib.image as mpimg
+#from matplotlib import cm
+#import matplotlib.animation as animation
+#import matplotlib.pyplot as plt
+#from matplotlib.colors import BoundaryNorm
 import pickle
 from os import listdir
 from os.path import isfile, join
