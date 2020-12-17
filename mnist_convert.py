@@ -8,6 +8,11 @@ import cv2
 from common import num_from_byte_array, mkdir, f2s, FOCAL_S
 import struct
 from focal import focal_to_spike
+try:
+    x = xrange(1)
+except:
+    xrange = range
+
 
 def read_img_file(filename, start_idx = 0, max_num_images = 10000000000, labels=None):
     f = open(filename, "rb")
@@ -16,14 +21,23 @@ def read_img_file(filename, start_idx = 0, max_num_images = 10000000000, labels=
         temp = [f.read(1), f.read(1), f.read(1), f.read(1)]
         # magic_number = num_from_byte_array(">I", temp)
         
-        temp = [f.read(1), f.read(1), f.read(1), f.read(1)]
-        number_images = num_from_byte_array(">I", temp)
+        temp = [f.read(1) for _ in range(4)]
+        tmp = temp[0]
+        for i in range(1, len(temp)):
+            tmp += temp[i]
+        number_images = num_from_byte_array(">I", tmp)
         
-        temp = [f.read(1), f.read(1), f.read(1), f.read(1)]
-        rows_per_image = num_from_byte_array(">I", temp)
+        temp = [f.read(1) for _ in range(4)]
+        tmp = temp[0]
+        for i in range(1, len(temp)):
+            tmp += temp[i]
+        rows_per_image = num_from_byte_array(">I", tmp)
         
-        temp = [f.read(1), f.read(1), f.read(1), f.read(1)]
-        cols_per_image = num_from_byte_array(">I", temp)
+        temp = [f.read(1) for _ in range(4)]
+        tmp = temp[0]
+        for i in range(1, len(temp)):
+            tmp += temp[i]
+        cols_per_image = num_from_byte_array(">I", tmp)
         
         ### 1 <=> from current position
         f.seek(start_idx * rows_per_image * cols_per_image, 1) 
@@ -53,11 +67,15 @@ def read_label_file(filename, start_idx = 0, max_num_labels = 10000000000000):
     f = open(filename, "rb")
     
     try:
-        temp = [f.read(1), f.read(1), f.read(1), f.read(1)]
+        temp = [f.read(1) for _ in range(4)]
         # magic_number = num_from_byte_array(">I", temp)
         
-        temp = [f.read(1), f.read(1), f.read(1), f.read(1)]
-        number_labels = num_from_byte_array(">I", temp)
+        temp = [f.read(1) for _ in range(4)]
+        tmp = temp[0]
+        for i in range(1, len(temp)):
+            tmp += temp[i]
+
+        number_labels = num_from_byte_array(">I", tmp)
         
         # 1 <==> from current position
         f.seek(start_idx, 1) 
@@ -78,6 +96,8 @@ def read_label_file(filename, start_idx = 0, max_num_labels = 10000000000000):
 def process(labels, images, n_imgs, out_dir, spikes_per_bin, timestep, 
             log_offset=0, percent=0.3):
     spikes = []
+    if len(images) == 0:
+        return
     img = np.zeros_like(images[0]['img'])
     spk_src = []
     for img_idx in labels:
@@ -101,7 +121,8 @@ def process(labels, images, n_imgs, out_dir, spikes_per_bin, timestep,
         np.savez_compressed(os.path.join(dirname, fname),
             label=label, color_image=img, grayscale_image=img,
             focal_spikes=spikes, spike_source_array=spk_src, timestep=timestep,
-            image_batch_index=img_idx, kernels=FOCAL_S.kernels.full_kernels)
+            image_batch_index=img_idx, kernels=FOCAL_S.kernels.full_kernels,
+            percent=percent)
 
 def mnist_convert(filenames, out_dir, percent, timestep, spikes_per_bin=1, 
                   skip_existing=True):
