@@ -162,7 +162,7 @@ def mnist_convert(filenames, out_dir, percent, timestep, spikes_per_bin=1,
 
 def open_and_convert(in_dir, out_dir, percent, timestep, 
                      spikes_per_bin=1, skip_existing=True, scaling=1.0):
-    search_path = os.path.join(os.getcwd(), in_dir, '*')
+    search_path = os.path.join(in_dir, '*')
     files = sorted( glob.glob(search_path) )
     mnist_convert(files, out_dir, percent, timestep, spikes_per_bin, skip_existing)
 
