@@ -29,7 +29,7 @@ def read_file(fname):
         jump = data['grayscale_image'].size
         
         n_spikes = len(spikes)
-        max_n_spikes = int(jump * 3 * data['percent'])
+        max_n_spikes = int(jump * 4 * data['percent'])
         n_spikes = min(n_spikes, max_n_spikes)
 
         out_data = np.zeros(n_spikes + 1, dtype='uint16')
@@ -39,7 +39,7 @@ def read_file(fname):
                 break
             out_data[i+1] = cell_type * jump + spike_id
     
-        return out_data
+        return out_data, jump * 4
 
 
 def convert_mnist(out_fname, input_dir):
@@ -48,22 +48,34 @@ def convert_mnist(out_fname, input_dir):
     idir = os.path.join(input_dir, "**", "**", "*.npz")
     wrong = 0
     correct = 1
-    for fname in glob.glob(idir):
-        d = read_file(fname)
-        
+    fnames = glob.glob(idir)
+    sizes = [read_file(fname)[0].size for fname in fnames]
+    ss = int(np.mean(sizes))
+    total = float(len(sizes))
+    tinv = 1./total
+    for i, fname in enumerate(fnames):
+        sys.stdout.write("\rConverted {:6.2f}%".format( 100.0*(i+1.0)*tinv ))
+        sys.stdout.flush()
+
+        d, s = read_file(fname)
+
+        if d.size < ss:
+            wrong += 1
+            continue
 
         if out_data is None:
-            out_data = d.reshape(1, -1)
+            out_data = d[:ss].reshape(1, -1)
         else:
-            if d.size < out_data[0].size:
-                wrong += 1
-                continue
+            out_data = np.vstack([out_data, d[:ss]])
 
-            correct += 1
-            out_data = np.vstack([out_data, d])
+        correct += 1
 
     # print("num wrong size files {}".format(wrong))
     # print("num correct size files {}".format(correct))
+    out_fname = "{0}_n_spikes_per_sample_{1}_total_neurons_{2}{3}".format(
+        out_fname[:-4], out_data[0].size, s, out_fname[-4:]
+    )
+
     out_data.tofile(out_fname)
 
 

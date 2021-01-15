@@ -1,6 +1,7 @@
 spike_files/
 *.pyc
 *npz
+**/out_16bit*.bin
 **.ipynb_checkpoints/
 **correlation-cache*
 **/.vscode/
