@@ -55,15 +55,15 @@ def convert_mnist(out_fname, input_dir):
         if out_data is None:
             out_data = d.reshape(1, -1)
         else:
-            if d.size != out_data[0].size:
+            if d.size < out_data[0].size:
                 wrong += 1
                 continue
 
             correct += 1
             out_data = np.vstack([out_data, d])
 
-    print("num wrong size files {}".format(wrong))
-    print("num correct size files {}".format(correct))
+    # print("num wrong size files {}".format(wrong))
+    # print("num correct size files {}".format(correct))
     out_data.tofile(out_fname)
 
 

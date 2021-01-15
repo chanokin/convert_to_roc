@@ -3,4 +3,6 @@ spike_files/
 *npz
 **.ipynb_checkpoints/
 **correlation-cache*
-.vscode/
+**/.vscode/
+**/.idea/
+output_spikes/

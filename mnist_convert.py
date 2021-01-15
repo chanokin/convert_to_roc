@@ -26,6 +26,7 @@ def read_img_file(filename, start_idx = 0, max_num_images = 10000000000, labels=
         for i in range(1, len(temp)):
             tmp += temp[i]
         number_images = num_from_byte_array(">I", tmp)
+        # print("Number of Images {}".format(number_images))
         
         temp = [f.read(1) for _ in range(4)]
         tmp = temp[0]
@@ -38,19 +39,19 @@ def read_img_file(filename, start_idx = 0, max_num_images = 10000000000, labels=
         for i in range(1, len(temp)):
             tmp += temp[i]
         cols_per_image = num_from_byte_array(">I", tmp)
+        # print("Image resolution {}x{}".format(rows_per_image, cols_per_image))
         
         ### 1 <=> from current position
         f.seek(start_idx * rows_per_image * cols_per_image, 1) 
 
         img_idx = start_idx
         images = {}
-        max_num_images = min(max_num_images, start_idx + number_images)
+        max_num_images = min(start_idx + max_num_images, number_images)
         while img_idx < max_num_images:
             img = np.zeros((rows_per_image, cols_per_image))
             for r in xrange(rows_per_image):
                 for c in xrange(cols_per_image):
                     img[r, c] = struct.unpack("B", f.read(1))[0]
-                            
             if labels is not None:
                 images[img_idx] = {'img': img, 'lbl': labels[img_idx]}
             else:
@@ -76,6 +77,7 @@ def read_label_file(filename, start_idx = 0, max_num_labels = 10000000000000):
             tmp += temp[i]
 
         number_labels = num_from_byte_array(">I", tmp)
+        # print("Number of Labels = {}".format(number_labels))
         
         # 1 <==> from current position
         f.seek(start_idx, 1) 
@@ -95,10 +97,13 @@ def read_label_file(filename, start_idx = 0, max_num_labels = 10000000000000):
 
 def process(labels, images, n_imgs, out_dir, spikes_per_bin, timestep, 
             log_offset=0, percent=0.3):
-    spikes = []
+
     if len(images) == 0:
+        print('no images found!')
         return
-    img = np.zeros_like(images[0]['img'])
+    firstkey = list(images.keys())[0]
+    img = np.zeros_like(images[firstkey]['img'])
+    spikes = []
     spk_src = []
     for img_idx in labels:
         pc = 100.0*float(img_idx + 1 + log_offset)/n_imgs
@@ -109,8 +114,8 @@ def process(labels, images, n_imgs, out_dir, spikes_per_bin, timestep,
         img[:] = images[img_idx]['img']
 
         spikes[:] = FOCAL_S.apply(img, percent)
-        spk_src[:] = focal_to_spike(spikes, img.shape, 
-                                    spikes_per_time_block=spikes_per_bin, 
+        spk_src[:] = focal_to_spike(spikes, img.shape,
+                                    spikes_per_time_block=spikes_per_bin,
                                     start_time=0., time_step=timestep)
 
         dirname = os.path.join(out_dir, "{:d}".format(label))
@@ -148,8 +153,8 @@ def mnist_convert(filenames, out_dir, percent, timestep, spikes_per_bin=1,
 
     test_dir = os.path.join(out_dir, 't10k')
     mkdir(test_dir)
-    img_fname = [f for f in filenames if f.startswith('t10k-images')][0]
-    lbl_fname = [f for f in filenames if f.startswith('t10k-labels')][0]
+    img_fname = [f for f in filenames if 't10k-images' in f][0]
+    lbl_fname = [f for f in filenames if 't10k-labels' in f][0]
     for start_idx in range(0, n_test, batch_size):
         labels.clear()
         labels = read_label_file(lbl_fname, start_idx, batch_size)
