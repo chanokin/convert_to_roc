@@ -138,6 +138,7 @@ def mnist_convert(filenames, out_dir, percent, timestep, spikes_per_bin=1,
     labels = {}
     images = {}
 
+    print("Converting training set")
     train_dir = os.path.join(out_dir, 'train')
     mkdir(train_dir)
     img_fname = [f for f in filenames if 'train-images' in f][0]
@@ -148,9 +149,10 @@ def mnist_convert(filenames, out_dir, percent, timestep, spikes_per_bin=1,
         images.clear()
         images = read_img_file(img_fname, start_idx, batch_size, labels)
 
-        process(labels, images, n_imgs, train_dir, spikes_per_bin, 
+        process(labels, images, n_train, train_dir, spikes_per_bin,
                 timestep, 0, percent)
 
+    print("\n\nConverting test set")
     test_dir = os.path.join(out_dir, 't10k')
     mkdir(test_dir)
     img_fname = [f for f in filenames if 't10k-images' in f][0]
@@ -161,8 +163,8 @@ def mnist_convert(filenames, out_dir, percent, timestep, spikes_per_bin=1,
         images.clear()
         images = read_img_file(img_fname, start_idx, batch_size, labels)
 
-        process(labels, images, n_imgs, train_dir, spikes_per_bin, 
-                timestep, n_train, percent)
+        process(labels, images, n_test, test_dir, spikes_per_bin,
+                timestep, 0, percent)
 
 
 def open_and_convert(in_dir, out_dir, percent, timestep, 
