@@ -3,15 +3,18 @@ import numpy
 from cv2 import sepFilter2D
 import cv2
 
+DISABLED_PIXEL_VAL = float(-10e9)
 class Convolution():
     '''
     Utility class to wrap around different functions for convolution 
     (i.e. separable convolution)
     '''
-    def __init__(self):
-        pass
-    
-    def sep_convolution(self, img, horz_k, vert_k, col_keep=1, row_keep=1, mode="full",   
+
+
+    def __init__(self, disabled_pixel_value=DISABLED_PIXEL_VAL):
+        self.disabled_pixel_value = disabled_pixel_value
+
+    def sep_convolution(self, img, horz_k, vert_k, col_keep=1, row_keep=1, mode="full",
                       fill=0):
         ''' Separated convolution -
             img      => image to convolve
@@ -117,9 +120,11 @@ class Convolution():
         # else:
         if True:
             center_img = self.sep_convolution(img.copy(), k[0], k[1], 
-                            col_keep=col_keep, row_keep=row_keep, mode='valid', fill=fill)
+                            col_keep=col_keep, row_keep=row_keep,
+                            mode='valid', fill=fill)
             surround_img  = self.sep_convolution(img.copy(), k[2], k[3], 
-                            col_keep=col_keep, row_keep=row_keep, mode='valid', fill=fill)
+                            col_keep=col_keep, row_keep=row_keep,
+                            mode='valid', fill=fill)
 
         conv_img = center_img + surround_img
 
@@ -163,11 +168,13 @@ class Convolution():
             half_img_width  = width//2
             half_img_height = height//2
             
-            col_range = numpy.arange(width)
-            row_range = numpy.arange(height)
+            col_range = [x for x in numpy.arange(width)
+                         if (x - half_img_width)%(col_keep) != 0]
+            row_range = [x for x in numpy.arange(height)
+                         if (x - half_img_height)%(row_keep) != 0]
             
-            img[:, [x for x in col_range if (x - half_img_width)%(col_keep)!= 0]] = 0
-            img[[x for x in row_range if (x - half_img_height)%(row_keep)!= 0], :] = 0
+            img[:, col_range] = self.disabled_pixel_value
+            img[row_range, :] = self.disabled_pixel_value
             #~ img[:, [x for x in col_range if (x)%(col_keep)!= 0]] = 0
             #~ img[[x for x in row_range if (x)%(row_keep)!= 0], :] = 0
         else:

@@ -89,7 +89,8 @@ class Focal():
         for cell_type in range(num_images):
             row, col = big_coords[cell_type]
             tmp_img = spike_images[cell_type].copy()
-            tmp_img[numpy.where(tmp_img == 0)] = -numpy.inf
+            # if cell_type > 1:
+            #     tmp_img[numpy.where(tmp_img == 0)] = -100000.0
             big_image[row:row+height, col:col+width] = tmp_img
 
         # Main FoCal loop
@@ -164,7 +165,7 @@ class Focal():
                     cell_type, originating_function="filter", 
                     force_homebrew=force_homebrew,
                     is_off_center=is_off_centre, mode='full')
-            convolved_img[cell_type] =  c
+            convolved_img[cell_type] = c
 
         return convolved_img
 
@@ -224,19 +225,19 @@ class Focal():
             
         # mark any weird pixels as -inf so they don't matter in the search
         inf_indices = numpy.where(img[min_img_row:max_img_row, min_img_col:max_img_col] == numpy.inf)
-        img[inf_indices] = 0
-        img[inf_indices] -= numpy.inf
+        # img[inf_indices] = 0
+        img[inf_indices] = -numpy.inf
         
         nan_indices = numpy.where(img[min_img_row:max_img_row, min_img_col:max_img_col] == numpy.nan)
-        img[nan_indices] = 0
-        img[nan_indices] -= numpy.inf
+        # img[nan_indices] = 0
+        img[nan_indices] = -numpy.inf
         
         # mark max value's coordinate to -inf to get it out of the search
         if is_max_val_layer:
-            img[row, col] -= numpy.inf
+            img[row, col] = -numpy.inf
         
         # No need to return, variables are passed as reference 
-        # because we're doing = and -= ops
+        # because we're doing [r,c] = and -= ops
 
 
     def local_coords_to_global_idx(self, coords, cell_type, 
@@ -248,10 +249,10 @@ class Focal():
                                                           [ 2 | 3 ]
                                                           ---------
         '''
-        row_add = cell_type//2
-        col_add = cell_type%2
-        global_coords = (coords[0] + row_add*local_img_shape[0], 
-                        coords[1] + col_add*local_img_shape[1])
+        row_add = cell_type // 2
+        col_add = cell_type % 2
+        global_coords = (coords[0] + row_add * local_img_shape[0],
+                         coords[1] + col_add * local_img_shape[1])
         global_idx = global_coords[0]*global_img_shape[1] + global_coords[1]
         return global_idx
 
@@ -274,8 +275,8 @@ class Focal():
 
     def cell_type_from_global_coords(self, coords, single_shape):
         '''Utility to compute which layer does a coordinate belong to'''
-        row_type = coords[0]//single_shape[0]
-        col_type = coords[1]//single_shape[1]
+        row_type = coords[0] // single_shape[0]
+        col_type = coords[1] // single_shape[1]
         cell_type = row_type*2 + col_type
         
         return cell_type

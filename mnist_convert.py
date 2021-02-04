@@ -101,6 +101,8 @@ def process(labels, images, n_imgs, out_dir, spikes_per_bin, timestep,
     if len(images) == 0:
         print('no images found!')
         return
+    keepers = {ct: FOCAL_S.convolver.get_subsample_keepers(ct)
+               for ct in range(FOCAL_S.kernels.max_num_kernels)}
     firstkey = list(images.keys())[0]
     img = np.zeros_like(images[firstkey]['img'])
     spikes = []
@@ -127,7 +129,7 @@ def process(labels, images, n_imgs, out_dir, spikes_per_bin, timestep,
             label=label, color_image=img, grayscale_image=img,
             focal_spikes=spikes, spike_source_array=spk_src, timestep=timestep,
             image_batch_index=img_idx, kernels=FOCAL_S.kernels.full_kernels,
-            percent=percent)
+            percent=percent, keepers=keepers)
 
 def mnist_convert(filenames, out_dir, percent, timestep, spikes_per_bin=1, 
                   skip_existing=True):
