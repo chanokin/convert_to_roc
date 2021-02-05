@@ -33,7 +33,7 @@ def read_file(fname):
             k: (height // keepers[k][0]) * (width // keepers[k][1])
             for k in keepers
         }
-        # total_neurons = np.sum([sizes[k] for k in sizes])
+        total_neurons = np.sum([sizes[k] for k in sizes])
         jumps = [0]
         for k in sorted(sizes.keys()):
             if k == 0:
@@ -41,7 +41,7 @@ def read_file(fname):
             jumps.append(sizes[k - 1] + jumps[k-1])
 
         n_spikes = len(spikes)
-        max_n_spikes = int(jump * 4 * data['percent'])
+        max_n_spikes = int(total_neurons * data['percent'])
         n_spikes = min(n_spikes, max_n_spikes)
 
         out_data = np.zeros(n_spikes, dtype='uint16')
@@ -59,7 +59,7 @@ def read_file(fname):
 
             out_data[i] = jumps[int(cell_type)] + spike_id
     
-        return out_data, sizes[sorted(sizes.keys())[-1]]
+        return out_data, total_neurons
 
 
 def convert_mnist(out_fname, input_dir):
