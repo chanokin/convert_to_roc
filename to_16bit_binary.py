@@ -59,7 +59,7 @@ def read_file(fname):
 
             out_data[i] = jumps[int(cell_type)] + spike_id
     
-        return out_data, jump * 4
+        return out_data, sizes[sorted(sizes.keys())[-1]]
 
 
 def convert_mnist(out_fname, input_dir):
@@ -81,12 +81,15 @@ def convert_mnist(out_fname, input_dir):
     testing = [x for x in fnames if 't10k' in x]
     testing = sorted(testing, key=key_f)
 
+
+    fnames = training + testing
     sizes = [read_file(fname)[0].size for fname in fnames]
     ss = int(np.min(sizes))
     total = float(len(sizes))
     tinv = 1./total
     for i, fname in enumerate(fnames):
-        sys.stdout.write("\rConverted {:6.2f}%".format( 100.0*(i+1.0)*tinv ))
+        sys.stdout.write("\rConverted\t{}\t{:6.2f}%".format(
+            fname, 100.0*(i+1.0)*tinv ))
         sys.stdout.flush()
 
         d, s = read_file(fname)
