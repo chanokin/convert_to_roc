@@ -1,5 +1,5 @@
 import numpy
-# from scipy.signal import sepfir2d
+# from scipy.signal import sepfir2d, convolve2d
 from cv2 import sepFilter2D
 import cv2
 
@@ -52,7 +52,7 @@ class Convolution():
                 for i in numpy.arange(-half_k_width, half_k_width + 1):
                     img_idx = x + i
                     if img_idx >= 0 and img_idx < width:
-                        k_sum += img[y,img_idx]*horz_k[k]
+                        k_sum += img[y, img_idx]*horz_k[k]
                     else:
                         k_sum += fill * horz_k[k]
                     k += 1
@@ -106,6 +106,7 @@ class Convolution():
         else:
             row_keep, col_keep = 1, 1
 
+
         # if not force_homebrew :
         # if cell_type in [0, 1]:
             # has a problem with images smaller than kernel
@@ -119,14 +120,17 @@ class Convolution():
 
         # else:
         if True:
-            center_img = self.sep_convolution(img.copy(), k[0], k[1], 
+            center_img = self.sep_convolution(img.copy(), k[0], k[1],
                             col_keep=col_keep, row_keep=row_keep,
                             mode='valid', fill=fill)
-            surround_img  = self.sep_convolution(img.copy(), k[2], k[3], 
+            surround_img  = self.sep_convolution(img.copy(), k[2], k[3],
                             col_keep=col_keep, row_keep=row_keep,
                             mode='valid', fill=fill)
 
         conv_img = center_img + surround_img
+
+        # # normalize so auto-correlation == 1 ?
+        # conv_img *= 1./numpy.sqrt(numpy.sum(conv_img**2))
 
         if not force_homebrew and originating_function == "filter":
             conv_img = self.subsample(conv_img, cell_type)

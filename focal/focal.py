@@ -161,10 +161,16 @@ class Focal():
             force_homebrew = ((img_width < (kw//2)) or (img_height < (kh//2)))
 
             is_off_centre = cell_type in [0, 2]
-            c = self.convolver.dog_sep_convolution(img, self.kernels[cell_type], 
-                    cell_type, originating_function="filter", 
-                    force_homebrew=force_homebrew,
-                    is_off_center=is_off_centre, mode='full')
+            k = self.kernels.full_kernels[cell_type]
+            c = convolve2d(img, k, 'same')
+            c = self.convolver.subsample(c, cell_type)
+            # if is_off_centre:
+            #     c = -c
+
+            # c = self.convolver.dog_sep_convolution(img, self.kernels[cell_type],
+            #         cell_type, originating_function="filter",
+            #         force_homebrew=force_homebrew,
+            #         is_off_center=is_off_centre, mode='full')
             convolved_img[cell_type] = c
 
         return convolved_img
